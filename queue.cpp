@@ -13,48 +13,75 @@ using namespace std;
 #define SLOW 1
 #define VERBOSE 1
 
+class Group
+{
+public:
+    int group_id;
+    float call_mean;
+};
+   
+class ServiceTime
+{
+public:
+    ServiceTime():
+        time_before_call(0), time_after_call(0), time_to_service(0){};
+    float time_before_call;
+    float time_after_call;
+    float time_to_service;
+};
 //expon with mean 1/lambda
 float expon(float lambda, float u)
 {
     return -(log(1 - u)/lambda);
 }
 
+float g_dial_success_prob;
+float g_dial_mean;
+float g_dial_max;
+float g_call_mean;
+//void emulate_service_time(float dial_success_prob, float dial_mean, float dial_max, float call_mean)
+ServiceTime emulate_service_time(float dial_success_prob, float dial_mean, float dial_max, float call_mean)
+{
+    ServiceTime st;
+    float u = (rand() / float(RAND_MAX));
+    if (u < dial_success_prob)
+    {
+        u = (rand() / float(RAND_MAX));
+        st.time_before_call = expon(1/dial_mean,u);
+        st.time_to_service += st.time_before_call;
+                
+        u = (rand() / float(RAND_MAX));
+        st.time_after_call = expon(1/call_mean,u);
+        st.time_to_service += st.time_after_call;
+    }
+    else
+    {
+        st.time_to_service = st.time_before_call = dial_max;
+    }
+    return st;
+}
+
+
 class customer
 {
 public:
-    customer (): time_to_service(0), group_id(-1) {};
+    customer (): enter_time(0), group_id(-1) {};
     bool operator<(const customer& a) const {
-        return enter_time < a.enter_time;
+        double diffSecs = difftime(this->enter_time_tm, a.enter_time_tm);
+        return diffSecs >= 0;
+//        return a.enter_time < enter_time;
     }
-    void emulate_service_time(float dial_success_prob, float dial_mean, float dial_max, float call_mean)
-        {
-            float u = (rand() / float(RAND_MAX));
-            time_before_call = time_after_call = 0;
-            if (u < dial_success_prob)
-            {
-                u = (rand() / float(RAND_MAX));
-                time_before_call = expon(1/dial_mean,u);
-                time_to_service += time_before_call;
-                
-                u = (rand() / float(RAND_MAX));
-                time_after_call = expon(1/call_mean,u);
-                time_to_service += time_after_call;
-            }
-            else
-            {
-                time_to_service = time_before_call = dial_max;
-            }
-            
-        }
     void show()
         {
-            printf("group_id=%d, enter_time=%.3f, time_to_service=%.3f ( %.3f + %.3f)",(int)group_id, (float)enter_time, (float)time_to_service, (float)time_before_call, (float)time_after_call);
+//            printf("group_id=%d, enter_time=%.3f",(int)group_id, (float)enter_time);
+            cout << "group_id="<<group_id<<", ";
+            struct tm* tmp = gmtime(&(enter_time_tm));
+            cout << asctime(tmp);
+//            printf("group_id=%d, enter_time=%.3f, time_to_service=%.3f ( %.3f + %.3f)",(int)group_id, (float)enter_time, (float)time_to_service, (float)time_before_call, (float)time_after_call);
 //            cout <<"group_id="<<group_id<<" enter_time="<<enter_time<<" time_to_service="<<time_to_service<<"("<<time_before_call<<"+"<<time_after_call<<")";
         }
-    float time_before_call;
-    float time_after_call;
-    float time_to_service;
     float enter_time;
+    time_t enter_time_tm;
     int group_id;
 };
 
@@ -106,7 +133,9 @@ public:
                         a->show();
                         cout<<endl;
                     }
-                    time_to_free = a->time_to_service;
+                    ServiceTime st = emulate_service_time(g_dial_success_prob, g_dial_mean, g_dial_max, g_call_mean);
+                    time_to_free = st.time_to_service;
+                    printf("generated time_to_service = %.3f\n", time_to_free);
                     c.erase(a);
                     return;
                 }
@@ -117,6 +146,10 @@ public:
         }
 };
 int Operator::count;
+
+
+
+
 
 class Server
 {
@@ -199,7 +232,7 @@ void Show_queue_extended(list<customer> queue)
 //        printf("(%d, %.2f)\n",(int)a.group_id, (float)a.time_to_service);
 
 //        printf("(%d, %.4f)\n",(int)a.group_id, (float)a.enter_time);
-        printf("(%d, %d, %.4f, %.4f) ",i, (int)a.group_id, (float)a.enter_time, (float)a.time_to_service);
+        printf("(%d, %d, %.4f) ",i, (int)a.group_id, (float)a.enter_time);
         i++;
     }
 
@@ -233,7 +266,7 @@ vector<customer> generate_customers(const vector<int> &group_nums, const vector<
         {
             temp[i].group_id = group_id;
             temp[i].enter_time = (rand() / float(RAND_MAX));
-            temp[i].emulate_service_time(dial_success_prob, dial_mean, dial_max, group_means[group_id]);
+//            temp[i].emulate_service_time(dial_success_prob, dial_mean, dial_max, group_means[group_id]);
             temp[i].group_id = group_id;
             // cout<<"generated customer:";
             // temp[i].show();
@@ -329,9 +362,9 @@ void read_groups(string gr_filename, vector<int>& groups_num, vector<float>& gro
 }
 
 
-void read_dial_options(string dial_filename, float& success, float& dial_mean, float& dial_max)
+void ReadDialOptions(string filename, float& success, float& dial_mean, float& dial_max)
 {
-    ifstream file(dial_filename);
+    ifstream file(filename);
     string line;
     getline(file, line);
     istringstream iss(line);
@@ -342,6 +375,100 @@ void read_dial_options(string dial_filename, float& success, float& dial_mean, f
     {
         printf("dial options: success_prob = %.3f, dial_mean=%.3f, dial_max=%.3f\n", (float)success, (float)dial_mean, (float)dial_max);
     }
+}
+
+vector<float> ReadGroupMeans(string filename)
+{
+    ifstream file(filename);
+    string line;
+    int max_group_id;
+    getline(file,line);
+    
+    istringstream iss(line);
+    iss >> max_group_id;
+    vector<float> temp(max_group_id + 1, 0.0);
+    while (getline(file, line))
+    {
+        istringstream iss(line);
+        int group_id;
+        float mean;
+        iss >> group_id;
+        iss >> mean;
+        if (group_id < 0)
+        {
+            cout << "wrong group_id!!"<<endl;
+            exit(1);
+        }
+        if (mean <= 0 || mean >= 1000)
+        {
+            cout << "wrong group mean "<<mean <<endl;
+            exit(1);
+        }
+        if (group_id >= temp.size())
+        {
+            int old_size = temp.size();
+            cout <<  "resizing group_id array\n";
+            temp.resize(group_id + 1);
+            for (int i = old_size - 1; i < group_id; i++)
+            {
+                temp[i] = 0;
+            }
+        }
+        temp[group_id] = mean;
+    }
+
+    cout<<"group means read from file "<<filename <<":"<<endl;
+    for (int i = 0; i < temp.size(); i++)
+        if (temp[i] >0)
+            cout <<"("<<i<<", "<< temp[i]<<")"<<endl;
+
+    cout <<endl;
+    return temp;
+}
+
+vector<customer> ReadCustomersDataBase(string filename)
+{
+    ifstream file(filename);
+    string line;
+    int customers_num;
+    getline(file,line);
+    
+    istringstream iss(line);
+    iss >> customers_num;
+    vector<customer> temp(customers_num);
+    int cust_idx = 0;
+    struct tm temp_tm;
+    while (getline(file, line))
+    {
+        istringstream iss(line);
+        string times_day,
+            times_time;
+        int group_id;
+        iss >> times_day;
+
+        iss >> times_time;
+        times_day += " " + times_time;
+        cout <<times_day<<endl;
+        
+        strptime(times_day.c_str(), "%Y-%m-%d %H:%M:%S", &temp_tm);        
+        
+        temp[cust_idx].enter_time_tm = timegm(&temp_tm);
+
+        iss >> group_id;
+        if (group_id < 0)
+        {
+            cout << "wrong group_id!!"<<endl;
+            exit(1);
+        }
+        temp[cust_idx].group_id = group_id;
+        cust_idx++;
+    }
+
+    sort(temp.begin(),temp.end());
+    cout<<"customers read from file "<<filename <<":"<<endl;
+    for (auto& a:temp)
+        a.show();
+    return temp;
 }
 
 
@@ -366,12 +493,15 @@ int main(int argc, char* argv[])
     float dial_success_prob,
         dial_mean,
         dial_max;
-    
+
+    vector<float> groupMeans = ReadGroupMeans(argv[1]);
+    ReadDialOptions(argv[2], dial_success_prob, dial_mean, dial_max);
+    vector<customer> customers = ReadCustomersDataBase(argv[3]);
+    return 0;
     if (argc >= 4)
     {
         ops = read_operators(argv[1]);
         read_groups(argv[2], groups_nums, groups_means);
-        read_dial_options(argv[3], dial_success_prob, dial_mean, dial_max);
         
     }
     else
@@ -383,7 +513,10 @@ int main(int argc, char* argv[])
         dial_mean = DIAL_MEAN;
         dial_max = DIAL_MAX;
     }
-
+    g_dial_success_prob = dial_success_prob;
+    g_dial_mean = dial_mean;
+    g_dial_max = dial_max;
+    g_call_mean = groups_means[0];
 
     if (SLOW)
         cin.get();
