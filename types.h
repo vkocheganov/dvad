@@ -12,8 +12,8 @@
 #include <string>
 #include <fstream>
 
-#define SLOW 1
-#define VERBOSE 1
+#define SLOW 0
+#define VERBOSE 0
 
 extern float g_dial_success_prob;
 extern float g_dial_mean;
@@ -39,7 +39,7 @@ public:
     customer (): enter_time(0), group_id(-1) {};
     bool operator<(const customer& a) const {
         double diffSecs = difftime(this->enter_time_tm, a.enter_time_tm);
-        return diffSecs >= 0;
+        return diffSecs <= 0;
     }
     void show()
         {
@@ -86,7 +86,7 @@ public:
                     return true;
             return false;
         }
-    void start_new_customer(list<customer>& c)
+    void start_new_customer(list<customer>& c, const vector<float>& grps)
         {
             if(VERBOSE)
                 cout<<"starting new customer for operator "<<operator_id<<endl;
@@ -100,9 +100,9 @@ public:
                         a->show();
                         cout<<endl;
                     }
-                    ServiceTime st = emulate_service_time(g_dial_success_prob, g_dial_mean, g_dial_max, g_call_mean);
+                    ServiceTime st = emulate_service_time(g_dial_success_prob, g_dial_mean, g_dial_max, grps[a->group_id]);
                     time_to_free = st.time_to_service;
-                    printf("generated time_to_service = %.3f\n", time_to_free);
+//                    printf("generated time_to_service (%f, %f, %f, %f) = %.3f\n", g_dial_success_prob, g_dial_mean, g_dial_max, grps[a->group_id], time_to_free);
                     c.erase(a);
                     return;
                 }
@@ -124,8 +124,9 @@ public:
 class Server
 {
 public:
-    Server(const vector<Operator>& ops): operators(ops){};
+Server(const vector<Operator>& ops, const vector<float>& grps): operators(ops), groupMeans(grps){};
     vector<Operator> operators;
+    vector<float> groupMeans;
     void show()
         {
             cout << "Server has following operators:\n";
@@ -146,7 +147,7 @@ public:
         {
             for (auto& op:operators)
             {
-                op.start_new_customer(cs);
+                op.start_new_customer(cs, groupMeans);
             }
         }
     bool do_iteration(list<customer>& cs, float& time)
@@ -168,7 +169,7 @@ public:
                         a.time_to_free -= time_to_reduce;
                 }
                 time = time_to_reduce;
-                minimum->start_new_customer(cs);
+                minimum->start_new_customer(cs, groupMeans);
                 return true;
             }
             return false;

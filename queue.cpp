@@ -58,9 +58,10 @@ void Show_queue(list<customer> queue)
 void Show_queue_extended(list<customer> queue)
 {
     int i = 0;
-    for (const auto& a:queue)
+    for ( auto& a:queue)
     {
-        printf("(%d, %d, %.4f) ",i, (int)a.group_id, (float)a.enter_time);
+        cout<<i<<",";
+        a.show();
         i++;
     }
 
@@ -117,45 +118,34 @@ int main(int argc, char* argv[])
     ops = read_operators(operators_file);
     for (auto& a:ops)
         a.show_ext();
+
+    vector<float> groupsMean = ReadGroupMeans(group_stat_file);
+
     
 
-    return 0;
+    // return 0;
 
-    vector<float> groupMeans = ReadGroupMeans(argv[1]);
     ReadDialOptions(argv[2], dial_success_prob, dial_mean, dial_max);
-    vector<customer> customers = ReadCustomersDataBase(argv[3]);
-    return 0;
-    if (argc >= 4)
-    {
-        ops = read_operators(argv[1]);
-//        read_groups(argv[2], groups_nums, groups_means);
-    }
-    else
-    {
-        // ops = OPERATORS;
-        groups_nums = GROUPS_NUM;
-        groups_means = GROUPS_MEAN;
-        dial_success_prob = DIAL_SUCCESS_PROB;
-        dial_mean = DIAL_MEAN;
-        dial_max = DIAL_MAX;
-    }
     g_dial_success_prob = dial_success_prob;
     g_dial_mean = dial_mean;
     g_dial_max = dial_max;
-    g_call_mean = groups_means[0];
 
+    vector<customer> customers = ReadCustomersDataBase(customers_data_base_file);
+    
     if (SLOW)
         cin.get();
-    // return 0;
+    
     float total_time = 0, iteration_time;
-//    for (int j = 0; j < 1000; j++)
-    for (int j = 0; j < 1; j++)    
+    int iterations = 10000;
+    vector<float> times(iterations);
+    for (int j = 0; j < iterations; j++)
+//    for (int j = 0; j < 1; j++)    
     {
+        total_time = 0;
         
-        Server s(ops);
-        vector<customer> temp_c;
+        Server s(ops, groupsMean);
         //= generate_customers(groups_nums, groups_means, dial_success_prob, dial_mean, dial_mean);
-        list<customer> c = create_queue(temp_c,true);
+        list<customer> c = create_queue(customers,true);
         if(VERBOSE)
         {
             Show_queue_extended(c);
@@ -204,7 +194,8 @@ int main(int argc, char* argv[])
                 cin.get();
             i++;
         }
+        times[j] = total_time;
     }
-    cout <<"time spent = "<<total_time<<endl;
+    cout <<"time spent = "<<accumulate(times.begin(), times.end(), 0) / iterations<<endl;
     return 0;
 }

@@ -196,6 +196,7 @@ void read_groups_nums(string gr_filename, vector<int>& groups_num)
     if(VERBOSE)
         cout <<endl;
 }
+
 void generate_customers(string in_filename, string out_filename)
 {
     vector<int> group_nums;
