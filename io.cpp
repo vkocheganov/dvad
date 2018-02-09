@@ -11,7 +11,7 @@
 #include <string>
 #include <fstream>
 
-vector<customer> ReadCustomersDataBase(string filename)
+vector<customer> ReadCustomersDataBase(string filename, map<int,int>& groups_of_interest)
 {
     ifstream file(filename);
     string line;
@@ -33,7 +33,7 @@ vector<customer> ReadCustomersDataBase(string filename)
 
         iss >> times_time;
         times_day += " " + times_time;
-        cout <<times_day<<endl;
+//        cout <<times_day<<endl;
         
         strptime(times_day.c_str(), "%Y-%m-%d %H:%M:%S", &temp_tm);        
         
@@ -45,11 +45,13 @@ vector<customer> ReadCustomersDataBase(string filename)
             cout << "wrong group_id!!"<<endl;
             exit(1);
         }
+        groups_of_interest[group_id] = 1;
         temp[cust_idx].group_id = group_id;
         cust_idx++;
     }
 
     sort(temp.begin(),temp.end());
+    
     cout<<"customers read from file "<<filename <<":"<<endl;
     for (auto& a:temp)
         a.show();
@@ -109,7 +111,7 @@ void ReadDialOptions(string filename, float& success, float& dial_mean, float& d
 }
 
 
-vector<float> ReadGroupMeans(string filename)
+GroupsAptrioriMeans ReadGroupMeans(string filename)
 {
     ifstream file(filename);
     string line;
@@ -118,7 +120,15 @@ vector<float> ReadGroupMeans(string filename)
     
     istringstream iss(line);
     iss >> max_group_id;
-    vector<float> temp(max_group_id + 1, 0.0);
+    
+    getline(file,line);
+    iss.clear();
+    iss.str(line);
+    
+    float extra_mean;
+    iss >> extra_mean;
+
+    vector<float> temp(max_group_id, 0.0);
     while (getline(file, line))
     {
         istringstream iss(line);
@@ -138,13 +148,15 @@ vector<float> ReadGroupMeans(string filename)
         }
         if (group_id >= temp.size())
         {
-            int old_size = temp.size();
-            cout <<  "resizing group_id array\n";
-            temp.resize(group_id + 1);
-            for (int i = old_size - 1; i < group_id; i++)
-            {
-                temp[i] = 0;
-            }
+            cout<<"max id was wrong!\n";
+            exit(1);
+            // int old_size = temp.size();
+            // cout <<  "resizing group_id array\n";
+            // temp.resize(group_id + 1);
+            // for (int i = old_size - 1; i < group_id; i++)
+            // {
+            //     temp[i] = 0;
+            // }
         }
         temp[group_id] = mean;
     }
@@ -155,7 +167,7 @@ vector<float> ReadGroupMeans(string filename)
             cout <<"("<<i<<", "<< temp[i]<<")"<<endl;
 
     cout <<endl;
-    return temp;
+    return GroupsAptrioriMeans(temp, extra_mean);
 }
 
 

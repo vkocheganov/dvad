@@ -12,8 +12,8 @@
 #include <string>
 #include <fstream>
 
-#define SLOW 0
-#define VERBOSE 0
+#define SLOW 1
+#define VERBOSE 1
 
 extern float g_dial_success_prob;
 extern float g_dial_mean;
@@ -52,6 +52,26 @@ public:
     int group_id;
 };
 
+class GroupsAptrioriMeans
+{
+public:
+    vector<float> means;
+    float extra_mean;
+GroupsAptrioriMeans(vector<float> &_means, float _extra_mean): means(_means), extra_mean(_extra_mean){};
+    float GetMean(int idx)
+    {
+        if (idx < 0)
+        {
+            cout <<"Idx < 0 in GetMean\n";
+            exit(1);
+        }
+        if (idx >= means.size() || means[idx] <= 0.01)
+            return extra_mean;
+        else
+            return means[idx];
+    }
+        
+};
 
 class Operator
 {
@@ -86,7 +106,7 @@ public:
                     return true;
             return false;
         }
-    void start_new_customer(list<customer>& c, const vector<float>& grps)
+    void start_new_customer(list<customer>& c, GroupsAptrioriMeans& grps)
         {
             if(VERBOSE)
                 cout<<"starting new customer for operator "<<operator_id<<endl;
@@ -100,7 +120,7 @@ public:
                         a->show();
                         cout<<endl;
                     }
-                    ServiceTime st = emulate_service_time(g_dial_success_prob, g_dial_mean, g_dial_max, grps[a->group_id]);
+                    ServiceTime st = emulate_service_time(g_dial_success_prob, g_dial_mean, g_dial_max, grps.GetMean(a->group_id));
                     time_to_free = st.time_to_service;
 //                    printf("generated time_to_service (%f, %f, %f, %f) = %.3f\n", g_dial_success_prob, g_dial_mean, g_dial_max, grps[a->group_id], time_to_free);
                     c.erase(a);
@@ -124,9 +144,9 @@ public:
 class Server
 {
 public:
-Server(const vector<Operator>& ops, const vector<float>& grps): operators(ops), groupMeans(grps){};
+Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps): operators(ops), groupMeans(grps){};
     vector<Operator> operators;
-    vector<float> groupMeans;
+    GroupsAptrioriMeans groupMeans;
     void show()
         {
             cout << "Server has following operators:\n";
@@ -180,5 +200,6 @@ Server(const vector<Operator>& ops, const vector<float>& grps): operators(ops), 
             return true;
         }
 };
+
 
 #endif

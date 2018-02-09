@@ -10,6 +10,7 @@
 #include <time.h>
 #include <string>
 #include <fstream>
+#include <map>
 using namespace std;
 
 float g_dial_success_prob;
@@ -29,6 +30,7 @@ ServiceTime emulate_service_time(float dial_success_prob, float dial_mean, float
 {
     ServiceTime st;
     float u = (rand() / float(RAND_MAX));
+    cout <<"simulation from: "<<dial_success_prob <<" "<<dial_mean <<" "<<dial_max <<" "<<call_mean<<endl;
     if (u < dial_success_prob)
     {
         u = (rand() / float(RAND_MAX));
@@ -115,28 +117,36 @@ int main(int argc, char* argv[])
         groups_nums_file = argv[5];
         generate_customers(groups_nums_file, customers_data_base_file);
     }
-    ops = read_operators(operators_file);
-    for (auto& a:ops)
-        a.show_ext();
 
-    vector<float> groupsMean = ReadGroupMeans(group_stat_file);
-
-    
-
-    // return 0;
-
+    // 1. Read apriori info: groups-wise call means and dial call means
+    GroupsAptrioriMeans groupsMean = ReadGroupMeans(group_stat_file);
     ReadDialOptions(argv[2], dial_success_prob, dial_mean, dial_max);
     g_dial_success_prob = dial_success_prob;
     g_dial_mean = dial_mean;
     g_dial_max = dial_max;
 
-    vector<customer> customers = ReadCustomersDataBase(customers_data_base_file);
+    // 2. Read online operators info
+    ops = read_operators(operators_file);
+
+    if (VERBOSE)
+    {
+        for (auto& a:ops)
+            a.show_ext();
+    }
+
+    // 3. Read online customers info
+    map<int,int> groups_of_interest;
+    vector<customer> customers = ReadCustomersDataBase(customers_data_base_file, groups_of_interest);
+
+    cout <<"size of groups in customers: "<< groups_of_interest.size()<<endl;
+
+    // return 0;
     
     if (SLOW)
         cin.get();
     
     float total_time = 0, iteration_time;
-    int iterations = 10000;
+    int iterations = 1000;
     vector<float> times(iterations);
     for (int j = 0; j < iterations; j++)
 //    for (int j = 0; j < 1; j++)    
@@ -144,7 +154,6 @@ int main(int argc, char* argv[])
         total_time = 0;
         
         Server s(ops, groupsMean);
-        //= generate_customers(groups_nums, groups_means, dial_success_prob, dial_mean, dial_mean);
         list<customer> c = create_queue(customers,true);
         if(VERBOSE)
         {
@@ -162,7 +171,6 @@ int main(int argc, char* argv[])
         {
             s.show();
         }
-        int temp;
         bool cont = true;
         int i = 0;
         total_time = 0;
