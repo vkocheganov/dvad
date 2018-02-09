@@ -1,3 +1,5 @@
+#include "io.h"
+#include "types.h"
 #include <sstream>
 #include <iostream>
 #include <math.h>
@@ -10,36 +12,19 @@
 #include <fstream>
 using namespace std;
 
-#define SLOW 1
-#define VERBOSE 1
+float g_dial_success_prob;
+float g_dial_mean;
+float g_dial_max;
+float g_call_mean;
 
-class Group
-{
-public:
-    int group_id;
-    float call_mean;
-};
+int Operator::count;
    
-class ServiceTime
-{
-public:
-    ServiceTime():
-        time_before_call(0), time_after_call(0), time_to_service(0){};
-    float time_before_call;
-    float time_after_call;
-    float time_to_service;
-};
 //expon with mean 1/lambda
 float expon(float lambda, float u)
 {
     return -(log(1 - u)/lambda);
 }
 
-float g_dial_success_prob;
-float g_dial_mean;
-float g_dial_max;
-float g_call_mean;
-//void emulate_service_time(float dial_success_prob, float dial_mean, float dial_max, float call_mean)
 ServiceTime emulate_service_time(float dial_success_prob, float dial_mean, float dial_max, float call_mean)
 {
     ServiceTime st;
@@ -61,160 +46,6 @@ ServiceTime emulate_service_time(float dial_success_prob, float dial_mean, float
     return st;
 }
 
-
-class customer
-{
-public:
-    customer (): enter_time(0), group_id(-1) {};
-    bool operator<(const customer& a) const {
-        double diffSecs = difftime(this->enter_time_tm, a.enter_time_tm);
-        return diffSecs >= 0;
-//        return a.enter_time < enter_time;
-    }
-    void show()
-        {
-//            printf("group_id=%d, enter_time=%.3f",(int)group_id, (float)enter_time);
-            cout << "group_id="<<group_id<<", ";
-            struct tm* tmp = gmtime(&(enter_time_tm));
-            cout << asctime(tmp);
-//            printf("group_id=%d, enter_time=%.3f, time_to_service=%.3f ( %.3f + %.3f)",(int)group_id, (float)enter_time, (float)time_to_service, (float)time_before_call, (float)time_after_call);
-//            cout <<"group_id="<<group_id<<" enter_time="<<enter_time<<" time_to_service="<<time_to_service<<"("<<time_before_call<<"+"<<time_after_call<<")";
-        }
-    float enter_time;
-    time_t enter_time_tm;
-    int group_id;
-};
-
-
-class Operator
-{
-    static int count;
-public:
-    Operator(vector<int> _ids = {}, int _operator_id = -1): is_free(0), time_to_free(0), group_ids(_ids), is_enabled(1), group_id(-1) {operator_id = _operator_id;};
-    int operator_id;
-    vector<int> group_ids;
-    bool is_free;
-    bool is_enabled;
-    float time_to_free;
-    int group_id;
-    void show() const {
-        cout << "Operator "<< operator_id<<": ";
-        cout <<"time="<<time_to_free<< ", ";
-        cout <<"\n";
-    }
-    void show_ext() const {
-        cout << "Operator "<< operator_id<<": ";
-        cout <<"time="<<time_to_free<< ", ";
-        cout << "is_enabled="<<is_enabled<< ", ";
-        cout <<"group_id="<<group_id<<", ";
-        cout << "serves groups: [ ";
-        for (const auto& a:group_ids)
-            cout<<a<<" ";
-        cout <<"]\n";
-    }
-    bool PossibleToService(customer& c)
-        {
-            for (const auto& g:group_ids)
-                if (g == c.group_id)
-                    return true;
-            return false;
-        }
-    void start_new_customer(list<customer>& c)
-        {
-            if(VERBOSE)
-                cout<<"starting new customer for operator "<<operator_id<<endl;
-            for (auto a = c.begin(); a != c.end(); a++)
-            {
-                if (PossibleToService(*a))
-                {
-                    if(VERBOSE)
-                    {
-                        cout <<"chosen:";
-                        a->show();
-                        cout<<endl;
-                    }
-                    ServiceTime st = emulate_service_time(g_dial_success_prob, g_dial_mean, g_dial_max, g_call_mean);
-                    time_to_free = st.time_to_service;
-                    printf("generated time_to_service = %.3f\n", time_to_free);
-                    c.erase(a);
-                    return;
-                }
-            }
-            is_enabled = false;
-            if(VERBOSE)
-                cout<<"disabling operator "<<operator_id<<endl;
-        }
-};
-int Operator::count;
-
-
-
-
-
-class Server
-{
-public:
-    Server(const vector<Operator>& ops): operators(ops){};
-    vector<Operator> operators;
-    void show()
-        {
-            cout << "Server has following operators:\n";
-            for (const auto& a:operators)
-            {
-                a.show();
-            }
-        }
-    void show_ext()
-        {
-            cout << "Server has following operators:\n";
-            for (const auto& a:operators)
-            {
-                a.show_ext();
-            }
-        }
-    void start(list<customer>& cs)
-        {
-            for (auto& op:operators)
-            {
-                op.start_new_customer(cs);
-            }
-        }
-    bool do_iteration(list<customer>& cs, float& time)
-        {
-            auto minimum = operators.begin();
-            auto it = operators.begin();
-            while (it != operators.end())
-            {
-                if (!minimum->is_enabled || (minimum->time_to_free > it->time_to_free && it->is_enabled))
-                    minimum = it;
-                it++;
-            }
-            if (minimum != operators.end() && minimum->is_enabled)
-            {
-                float time_to_reduce = minimum->time_to_free;
-                for (auto& a:operators)
-                {
-                    if (a.is_enabled)
-                        a.time_to_free -= time_to_reduce;
-                }
-                time = time_to_reduce;
-                minimum->start_new_customer(cs);
-                return true;
-            }
-            return false;
-            if (minimum == operators.end() || !minimum->is_enabled)
-            {
-                return false;
-            }
-            return true;
-        }
-};
-
-
-
-list<customer> serv_queue;
-
-
 void Show_queue(list<customer> queue)
 {
     for (const auto& a:queue)
@@ -229,15 +60,11 @@ void Show_queue_extended(list<customer> queue)
     int i = 0;
     for (const auto& a:queue)
     {
-//        printf("(%d, %.2f)\n",(int)a.group_id, (float)a.time_to_service);
-
-//        printf("(%d, %.4f)\n",(int)a.group_id, (float)a.enter_time);
         printf("(%d, %d, %.4f) ",i, (int)a.group_id, (float)a.enter_time);
         i++;
     }
 
 }
-
 
 list<customer> create_queue(vector<customer> &c, bool need_sort)
 {
@@ -254,235 +81,13 @@ list<customer> create_queue(vector<customer> &c, bool need_sort)
     return temp;
 }
 
-vector<customer> generate_customers(const vector<int> &group_nums, const vector<float>& group_means, float dial_success_prob, float dial_mean, float dial_max)
-{
-    int total_size = accumulate(group_nums.begin(), group_nums.end(), 0);
-    vector<customer> temp(total_size);
-    int shift = 0;
-    int group_id = 0;
-    for (const auto& gn:group_nums)
-    {
-        for (int i = shift; i < shift + gn; i++ )
-        {
-            temp[i].group_id = group_id;
-            temp[i].enter_time = (rand() / float(RAND_MAX));
-//            temp[i].emulate_service_time(dial_success_prob, dial_mean, dial_max, group_means[group_id]);
-            temp[i].group_id = group_id;
-            // cout<<"generated customer:";
-            // temp[i].show();
-            // cout<<endl;
-        }
-        shift += gn;
-        group_id++;
-    }
-    return temp;
-}
 
-
-
-vector<Operator> read_operators(string op_filename)
-{
-    ifstream file(op_filename);
-    int nops;
-    string line;
-    getline(file, line);
-    istringstream iss(line);
-    iss>>nops;
-    vector<Operator> temp(nops);
-    if(VERBOSE)
-    {
-        cout <<"readint operators"<<endl;
-        cout <<"num operators = "<<nops<<endl;
-    }
-    for (int i = 0; i < nops; i++)
-    {
-        getline(file, line);
-        istringstream iss(line);
-        vector<int> groups;
-        while (!iss.eof())
-        {
-            int temp;
-            iss >> temp;
-            groups.push_back(temp);
-        }
-        temp[i] = Operator(groups, i);
-        if(VERBOSE)
-            temp[i].show_ext();
-    }
-    return temp;
-}
-
-
-void read_groups(string gr_filename, vector<int>& groups_num, vector<float>& groups_mean)
-{
-    if(VERBOSE)
-        cout <<"reading groups\n";
-    ifstream file(gr_filename);
-    int ngrs;
-    string line;
-    
-    getline(file, line);
-    istringstream iss1(line);
-    iss1>>ngrs;
-    if(VERBOSE)
-        cout <<"num_groups="<<ngrs<<endl;
-
-    
-    getline(file, line);
-    istringstream iss2(line);
-    groups_num.clear();
-    if(VERBOSE)
-        cout <<"nums: ";
-    while (!iss2.eof())
-    {
-        int temp;
-        iss2 >> temp;
-        groups_num.push_back(temp);
-        if(VERBOSE)
-            cout <<temp<<" ";
-    }
-    if(VERBOSE)
-        cout <<endl;
-    
-    getline(file, line);
-    istringstream iss3(line);
-    groups_mean.clear();
-    if(VERBOSE)
-        cout <<"means: ";
-    while (!iss3.eof())
-    {
-        float temp;
-        iss3 >> temp;
-        groups_mean.push_back(temp);
-        if(VERBOSE)
-            cout << temp<< " ";
-    }
-    if(VERBOSE)
-        cout<<endl;
-}
-
-
-void ReadDialOptions(string filename, float& success, float& dial_mean, float& dial_max)
-{
-    ifstream file(filename);
-    string line;
-    getline(file, line);
-    istringstream iss(line);
-    iss>>success;
-    iss>>dial_mean;
-    iss>>dial_max;
-    if(VERBOSE)
-    {
-        printf("dial options: success_prob = %.3f, dial_mean=%.3f, dial_max=%.3f\n", (float)success, (float)dial_mean, (float)dial_max);
-    }
-}
-
-vector<float> ReadGroupMeans(string filename)
-{
-    ifstream file(filename);
-    string line;
-    int max_group_id;
-    getline(file,line);
-    
-    istringstream iss(line);
-    iss >> max_group_id;
-    vector<float> temp(max_group_id + 1, 0.0);
-    while (getline(file, line))
-    {
-        istringstream iss(line);
-        int group_id;
-        float mean;
-        iss >> group_id;
-        iss >> mean;
-        if (group_id < 0)
-        {
-            cout << "wrong group_id!!"<<endl;
-            exit(1);
-        }
-        if (mean <= 0 || mean >= 1000)
-        {
-            cout << "wrong group mean "<<mean <<endl;
-            exit(1);
-        }
-        if (group_id >= temp.size())
-        {
-            int old_size = temp.size();
-            cout <<  "resizing group_id array\n";
-            temp.resize(group_id + 1);
-            for (int i = old_size - 1; i < group_id; i++)
-            {
-                temp[i] = 0;
-            }
-        }
-        temp[group_id] = mean;
-    }
-
-    cout<<"group means read from file "<<filename <<":"<<endl;
-    for (int i = 0; i < temp.size(); i++)
-        if (temp[i] >0)
-            cout <<"("<<i<<", "<< temp[i]<<")"<<endl;
-
-    cout <<endl;
-    return temp;
-}
-
-vector<customer> ReadCustomersDataBase(string filename)
-{
-    ifstream file(filename);
-    string line;
-    int customers_num;
-    getline(file,line);
-    
-    istringstream iss(line);
-    iss >> customers_num;
-    vector<customer> temp(customers_num);
-    int cust_idx = 0;
-    struct tm temp_tm;
-    while (getline(file, line))
-    {
-        istringstream iss(line);
-        string times_day,
-            times_time;
-        int group_id;
-        iss >> times_day;
-
-        iss >> times_time;
-        times_day += " " + times_time;
-        cout <<times_day<<endl;
-        
-        strptime(times_day.c_str(), "%Y-%m-%d %H:%M:%S", &temp_tm);        
-        
-        temp[cust_idx].enter_time_tm = timegm(&temp_tm);
-
-        iss >> group_id;
-        if (group_id < 0)
-        {
-            cout << "wrong group_id!!"<<endl;
-            exit(1);
-        }
-        temp[cust_idx].group_id = group_id;
-        cust_idx++;
-    }
-
-    sort(temp.begin(),temp.end());
-    cout<<"customers read from file "<<filename <<":"<<endl;
-    for (auto& a:temp)
-        a.show();
-    return temp;
-}
-
-
-//void generate_customer_database(vector<int>& groups_nums,)
 #define DIAL_SUCCESS_PROB 0.9
 #define DIAL_MEAN 5
 #define DIAL_MAX 15
 
 const vector<int> GROUPS_NUM = {10, 30};
 const vector<float> GROUPS_MEAN = {200, 200};
-const vector<Operator> OPERATORS = {
-    Operator({0}, 0),
-    Operator({0,1}, 1),
-};
 
 int main(int argc, char* argv[])
 {
@@ -493,6 +98,28 @@ int main(int argc, char* argv[])
     float dial_success_prob,
         dial_mean,
         dial_max;
+    int idx = 1;
+
+
+    cout << "Usage:\n"<<
+        "./a.out file_stat_1 file_stat_2 file_database_customers file_database_free_operators\n\n";
+    
+    string group_stat_file = argv[1],
+        dial_stat_file = argv[2],
+        customers_data_base_file = argv[3],
+        operators_file = argv[4],
+        groups_nums_file;
+    if (argc > 5)
+    {
+        groups_nums_file = argv[5];
+        generate_customers(groups_nums_file, customers_data_base_file);
+    }
+    ops = read_operators(operators_file);
+    for (auto& a:ops)
+        a.show_ext();
+    
+
+    return 0;
 
     vector<float> groupMeans = ReadGroupMeans(argv[1]);
     ReadDialOptions(argv[2], dial_success_prob, dial_mean, dial_max);
@@ -501,12 +128,11 @@ int main(int argc, char* argv[])
     if (argc >= 4)
     {
         ops = read_operators(argv[1]);
-        read_groups(argv[2], groups_nums, groups_means);
-        
+//        read_groups(argv[2], groups_nums, groups_means);
     }
     else
     {
-        ops = OPERATORS;
+        // ops = OPERATORS;
         groups_nums = GROUPS_NUM;
         groups_means = GROUPS_MEAN;
         dial_success_prob = DIAL_SUCCESS_PROB;
@@ -527,7 +153,8 @@ int main(int argc, char* argv[])
     {
         
         Server s(ops);
-        vector<customer> temp_c = generate_customers(groups_nums, groups_means, dial_success_prob, dial_mean, dial_mean);
+        vector<customer> temp_c;
+        //= generate_customers(groups_nums, groups_means, dial_success_prob, dial_mean, dial_mean);
         list<customer> c = create_queue(temp_c,true);
         if(VERBOSE)
         {
