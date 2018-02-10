@@ -30,7 +30,7 @@ ServiceTime emulate_service_time(float dial_success_prob, float dial_mean, float
 {
     ServiceTime st;
     float u = (rand() / float(RAND_MAX));
-    cout <<"simulation from: "<<dial_success_prob <<" "<<dial_mean <<" "<<dial_max <<" "<<call_mean<<endl;
+//    cout <<"simulation from: "<<dial_success_prob <<" "<<dial_mean <<" "<<dial_max <<" "<<call_mean<<endl;
     if (u < dial_success_prob)
     {
         u = (rand() / float(RAND_MAX));
