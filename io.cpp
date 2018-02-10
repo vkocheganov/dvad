@@ -52,9 +52,9 @@ vector<customer> ReadCustomersDataBase(string filename, map<int,int>& groups_of_
 
     sort(temp.begin(),temp.end());
     
-    cout<<"customers read from file "<<filename <<":"<<endl;
-    for (auto& a:temp)
-        a.show();
+    // cout<<"customers read from file "<<filename <<":"<<endl;
+    // for (auto& a:temp)
+    //     a.show();
     return temp;
 }
 
@@ -176,7 +176,6 @@ GroupsAptrioriMeans ReadGroupMeans(string filename)
 
 
 
-//void read_groups(string gr_filename, vector<int>& groups_num, vector<float>& groups_mean)
 void read_groups_nums(string gr_filename, vector<int>& groups_num)
 {
     if(VERBOSE)

@@ -24,8 +24,13 @@ float g_call_mean;
 int Operator::count;
    
 //expon with mean 1/lambda
+const double eps=0.000001;
 float expon(float lambda, float u)
 {
+    if (1 - u < eps)
+        u = eps;
+    if (u < eps)
+        u = eps;
     return -(log(1 - u)/lambda);
 }
 
@@ -33,20 +38,25 @@ ServiceTime emulate_service_time(float dial_success_prob, float dial_mean, float
 {
     ServiceTime st;
     float u = (rand() / float(RAND_MAX));
-//    cout <<"simulation from: "<<dial_success_prob <<" "<<dial_mean <<" "<<dial_max <<" "<<call_mean<<endl;
+    st.time_to_service = 0;
     if (u < dial_success_prob)
     {
         u = (rand() / float(RAND_MAX));
-        st.time_before_call = expon(1/dial_mean,u);
+        st.time_before_call = round(expon(1/dial_mean,u));
         st.time_to_service += st.time_before_call;
                 
         u = (rand() / float(RAND_MAX));
-        st.time_after_call = expon(1/call_mean,u);
+        st.time_after_call = round(expon(1/call_mean,u));
         st.time_to_service += st.time_after_call;
     }
     else
     {
-        st.time_to_service = st.time_before_call = dial_max;
+        st.time_to_service = st.time_before_call = round(dial_max);
+    }
+    if (st.time_to_service < 0 || st.time_to_service > 10000)
+    {
+        cout <<"time to service is wrong " << st.time_to_service<<endl;
+        cout <<"simulation from: "<<dial_success_prob <<" "<<dial_mean <<" "<<dial_max <<" "<<call_mean<<endl;
     }
     return st;
 }
@@ -148,9 +158,17 @@ int main(int argc, char* argv[])
     if (SLOW)
         cin.get();
     
-    float total_time = 0, iteration_time;
-    int iterations = 1000;
-    vector<float> times(iterations);
+    int total_time = 0;
+    int iteration_time;
+    int iterations = 20000;
+    vector<int> times(iterations);
+
+    cout <<"sizeof (int) "<<sizeof(int)<<endl;
+    cout <<"sizeof (unsigned long int) "<<sizeof(unsigned long int)<<endl;
+    cout <<"sizeof (unsigned long long int) "<<sizeof(unsigned long long int)<<endl;
+    unsigned long start_time = time(NULL),
+        end_time;
+    // cout <<"start time: "<<start_time<<endl;
     for (int j = 0; j < iterations; j++)
 //    for (int j = 0; j < 1; j++)    
     {
@@ -188,15 +206,19 @@ int main(int argc, char* argv[])
             cont = s.do_iteration(c, iteration_time);
             if (iteration_time < 0)
             {
-                if(VERBOSE)
-                    cout <<"it time < 0!\n";
+                if (VERBOSE)
+                    cout <<"it time < 0!" << iteration_time <<"\n";
             }
             else
                 total_time += iteration_time;
+            if (total_time < 0)
+            {
+                cout <<"total_time <0 !!" <<total_time<<" iteration" << j <<" iteration time = " << iteration_time<<endl;
+            }
         
             if(VERBOSE)
             {
-                printf("iteration time = %.3f, total_time = %.3f\n", iteration_time, total_time);
+                printf("iteration time = %d, total_time = %d\n", iteration_time, (int)total_time);
                 s.show();
                 Show_queue_extended(c);
                 cout<<endl<<endl;
@@ -205,8 +227,20 @@ int main(int argc, char* argv[])
                 cin.get();
             i++;
         }
-        times[j] = total_time;
+        times[j] = (int)total_time;
     }
-    cout <<"time spent = "<<accumulate(times.begin(), times.end(), 0) / iterations<<endl;
+    end_time = time(nullptr);
+    // cout <<"end time: "<<end_time<<endl;
+    unsigned long long summ = 0;
+    for (int j = 0; j < iterations; j++)
+    {
+        summ += times[j];
+    }
+    cout << summ<<endl;
+    summ /= iterations;
+    cout <<"time spent alt = "<<summ<<endl;
+
+
+    cout <<"time for generating:" << end_time - start_time<<endl;
     return 0;
 }

@@ -12,8 +12,8 @@
 #include <string>
 #include <fstream>
 
-#define SLOW 1
-#define VERBOSE 1
+#define SLOW 0
+#define VERBOSE 0
 
 extern float g_dial_success_prob;
 extern float g_dial_mean;
@@ -27,16 +27,16 @@ class ServiceTime
 public:
     ServiceTime():
         time_before_call(0), time_after_call(0), time_to_service(0){};
-    float time_before_call;
-    float time_after_call;
-    float time_to_service;
+    int time_before_call;
+    int time_after_call;
+    int time_to_service;
 };
 ServiceTime emulate_service_time(float dial_success_prob, float dial_mean, float dial_max, float call_mean);
 
 class customer
 {
 public:
-    customer (): enter_time(0), group_id(-1) {};
+    customer (): group_id(-1) {};
     bool operator<(const customer& a) const {
         double diffSecs = difftime(this->enter_time_tm, a.enter_time_tm);
         return diffSecs <= 0;
@@ -47,7 +47,6 @@ public:
             struct tm* tmp = gmtime(&(enter_time_tm));
             cout << asctime(tmp);
         }
-    float enter_time;
     time_t enter_time_tm;
     int group_id;
 };
@@ -82,7 +81,7 @@ public:
     vector<int> group_ids;
     bool is_free;
     bool is_enabled;
-    float time_to_free;
+    int time_to_free;
     int group_id;
     void show() const {
         cout << "Operator "<< operator_id<<": ";
@@ -133,12 +132,12 @@ public:
         }
 };
 
-class Group
-{
-public:
-    int group_id;
-    float call_mean;
-};
+// class Group
+// {
+// public:
+//     int group_id;
+//     float call_mean;
+// };
 
 
 class Server
@@ -170,7 +169,7 @@ Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps): operators(
                 op.start_new_customer(cs, groupMeans);
             }
         }
-    bool do_iteration(list<customer>& cs, float& time)
+    bool do_iteration(list<customer>& cs, int& time)
         {
             auto minimum = operators.begin();
             auto it = operators.begin();
@@ -182,7 +181,7 @@ Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps): operators(
             }
             if (minimum != operators.end() && minimum->is_enabled)
             {
-                float time_to_reduce = minimum->time_to_free;
+                int time_to_reduce = minimum->time_to_free;
                 for (auto& a:operators)
                 {
                     if (a.is_enabled)
