@@ -1,3 +1,6 @@
+// To run:
+//   ./a.out ./apriori_stat/apriori_data_groups ./apriori_stat/apriori_data_dial ./data_bases/input_customers ./data_bases/input_operators ./test_data/group_file
+
 #include "io.h"
 #include "types.h"
 #include <sstream>
