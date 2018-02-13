@@ -45,7 +45,15 @@ vector<customer> ReadCustomersDataBase(string filename, map<int,int>& groups_of_
             cout << "wrong group_id!!"<<endl;
             exit(1);
         }
-        groups_of_interest[group_id] = 1;
+        auto grp = groups_of_interest.find(group_id);
+        if (grp == groups_of_interest.end())
+        {
+            groups_of_interest[group_id] = 1;
+        }
+        else
+        {
+            groups_of_interest[group_id]++;
+        }
         temp[cust_idx].group_id = group_id;
         cust_idx++;
     }
@@ -55,6 +63,12 @@ vector<customer> ReadCustomersDataBase(string filename, map<int,int>& groups_of_
     // cout<<"customers read from file "<<filename <<":"<<endl;
     // for (auto& a:temp)
     //     a.show();
+
+    cout <<"from file queues:"<<endl;
+    for (auto & grp:groups_of_interest)
+    {
+        cout <<grp.first<<" ~ "<<grp.second<<endl;
+    }
     return temp;
 }
 

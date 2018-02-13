@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
     
     int total_time = 0;
     int iteration_time;
-    int iterations = 20000;
+    int iterations = 10000;
     vector<int> times(iterations);
 
     cout <<"sizeof (int) "<<sizeof(int)<<endl;
@@ -168,13 +168,19 @@ int main(int argc, char* argv[])
     cout <<"sizeof (unsigned long long int) "<<sizeof(unsigned long long int)<<endl;
     unsigned long start_time = time(NULL),
         end_time;
+    map<int, vector<int> > statInfo;
+    vector<int> total_times(iterations,0);
+    for (const auto& grp:groups_of_interest)
+    {
+        statInfo[grp.first] = vector<int>(iterations,0);
+    }
     // cout <<"start time: "<<start_time<<endl;
     for (int j = 0; j < iterations; j++)
 //    for (int j = 0; j < 1; j++)    
     {
         total_time = 0;
         
-        Server s(ops, groupsMean);
+        Server s(ops, groupsMean, groups_of_interest);
         list<customer> c = create_queue(customers,true);
         if(VERBOSE)
         {
@@ -202,23 +208,11 @@ int main(int argc, char* argv[])
                 cout<<endl;
                 cout<<"do_iteration "<<i<<endl;
             }
-            iteration_time = -1;
-            cont = s.do_iteration(c, iteration_time);
-            if (iteration_time < 0)
-            {
-                if (VERBOSE)
-                    cout <<"it time < 0!" << iteration_time <<"\n";
-            }
-            else
-                total_time += iteration_time;
-            if (total_time < 0)
-            {
-                cout <<"total_time <0 !!" <<total_time<<" iteration" << j <<" iteration time = " << iteration_time<<endl;
-            }
+            // iteration_time = -1;
+            cont = s.do_iteration(c);
         
             if(VERBOSE)
             {
-                printf("iteration time = %d, total_time = %d\n", iteration_time, (int)total_time);
                 s.show();
                 Show_queue_extended(c);
                 cout<<endl<<endl;
@@ -227,19 +221,29 @@ int main(int argc, char* argv[])
                 cin.get();
             i++;
         }
-        times[j] = (int)total_time;
+        s.GetGroupsStat(statInfo, total_times, j);
     }
     end_time = time(nullptr);
     // cout <<"end time: "<<end_time<<endl;
     unsigned long long summ = 0;
     for (int j = 0; j < iterations; j++)
     {
-        summ += times[j];
+        summ += total_times[j];
     }
     cout << summ<<endl;
     summ /= iterations;
     cout <<"time spent alt = "<<summ<<endl;
 
+    for (const auto& SI: statInfo)
+    {
+        unsigned long long tmp = 0;
+        for (const auto& si:SI.second)
+            tmp += si;
+        tmp /= SI.second.size();
+        cout <<"Group "<<SI.first<<" ~ "<<tmp<<" secs\n";
+    }
+
+    
 
     cout <<"time for generating:" << end_time - start_time<<endl;
     return 0;

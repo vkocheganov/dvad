@@ -120,6 +120,7 @@ public:
                         cout<<endl;
                     }
                     ServiceTime st = emulate_service_time(g_dial_success_prob, g_dial_mean, g_dial_max, grps.GetMean(a->group_id));
+                    group_id = a->group_id;
                     time_to_free = st.time_to_service;
 //                    printf("generated time_to_service (%f, %f, %f, %f) = %.3f\n", g_dial_success_prob, g_dial_mean, g_dial_max, grps[a->group_id], time_to_free);
                     c.erase(a);
@@ -140,18 +141,33 @@ public:
 // };
 
 
+
 class Server
 {
 public:
-Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps): operators(ops), groupMeans(grps){};
+Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps, const map<int,int> groups_of_interest): operators(ops), groupMeans(grps), total_time(0), groups_times(groups_of_interest), groups_customers(groups_of_interest)
+    {
+        for (auto& grp:groups_times)
+        {
+            grp.second = 0;
+        }
+    };
     vector<Operator> operators;
     GroupsAptrioriMeans groupMeans;
+map<int,int> groups_customers;
+    map<int,int> groups_times;
+    int total_time;
     void show()
         {
             cout << "Server has following operators:\n";
             for (const auto& a:operators)
             {
                 a.show();
+            }
+            cout << "Server has following queues:\n";
+            for (const auto& a:groups_customers)
+            {
+                cout<<"group "<<a.first<<" ~ "<<a.second<<endl;
             }
         }
     void show_ext()
@@ -169,7 +185,7 @@ Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps): operators(
                 op.start_new_customer(cs, groupMeans);
             }
         }
-    bool do_iteration(list<customer>& cs, int& time)
+    bool do_iteration(list<customer>& cs)
         {
             auto minimum = operators.begin();
             auto it = operators.begin();
@@ -187,7 +203,13 @@ Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps): operators(
                     if (a.is_enabled)
                         a.time_to_free -= time_to_reduce;
                 }
-                time = time_to_reduce;
+                total_time += time_to_reduce;
+                groups_customers[minimum->group_id]--;
+                if (groups_customers[minimum->group_id] == 0)
+                {
+                    groups_times[minimum->group_id] = total_time;
+//                    cout <<minimum->group_id <<" group is finished!"<<" its time = " << total_time<<"\n";
+                }
                 minimum->start_new_customer(cs, groupMeans);
                 return true;
             }
@@ -198,6 +220,14 @@ Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps): operators(
             }
             return true;
         }
+    void GetGroupsStat(map<int,vector<int> >& stat, vector<int>& total_times, int idx)
+    {
+        for (auto& grp:groups_times)
+        {
+            stat[grp.first][idx] = grp.second;
+        }
+        total_times[idx] = total_time;
+    }
 };
 
 
