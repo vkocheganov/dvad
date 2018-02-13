@@ -171,3 +171,6 @@ for group in groups:
 # alpha1=gamma.ppf(q1, a, loc=0, scale=scale)
 # alpha2=gamma.ppf(q2, a, loc=0, scale=scale)
 # print "(%.2f, %.2f) vs (%.2f, %.2f)" % (alpha1,alpha2,0,a*scale)
+
+
+
