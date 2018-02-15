@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
     if (argc > 5)
     {
         groups_nums_file = argv[5];
-        generate_customers(groups_nums_file, customers_data_base_file);
+//        generate_customers(groups_nums_file, customers_data_base_file);
     }
 
     // 1. Read apriori info: groups-wise call means and dial call means
