@@ -9,7 +9,7 @@ using namespace std;
 
 vector<customer> ReadCustomersDataBase(string filename, map<int,int>&);
 vector<Operator> read_operators(string op_filename);
-void ReadDialOptions(string filename, float& success, float& dial_mean, float& dial_max);
+void ReadDialOptions(string filename, DialInfo&);
 GroupsAptrioriMeans ReadGroupMeans(string filename);
 void generate_customers(string in_filename, string out_filename);
 void read_groups_nums(string gr_filename, vector<int>& groups_num);

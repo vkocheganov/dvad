@@ -16,10 +16,10 @@
 #include <map>
 using namespace std;
 
-float g_dial_success_prob;
-float g_dial_mean;
-float g_dial_max;
-float g_call_mean;
+// float g_dial_success_prob;
+// float g_dial_mean;
+// float g_dial_max;
+// float g_call_mean;
 
 int Operator::count;
    
@@ -34,15 +34,19 @@ float expon(float lambda, float u)
     return -(log(1 - u)/lambda);
 }
 
-ServiceTime emulate_service_time(float dial_success_prob, float dial_mean, float dial_max, float call_mean)
+// map<int,int> calc_queues_lengths(vector<customer> cs)
+// {
+//     if 
+// }
+ServiceTime emulate_service_time(float dial_success_prob, float dial_mean_succ, float dial_mean_fail, float call_mean)
 {
     ServiceTime st;
     float u = (rand() / float(RAND_MAX));
     st.time_to_service = 0;
     if (u < dial_success_prob)
     {
-        u = (rand() / float(RAND_MAX));
-        st.time_before_call = round(expon(1/dial_mean,u));
+        // u = (rand() / float(RAND_MAX));
+        st.time_before_call = dial_mean_succ;
         st.time_to_service += st.time_before_call;
                 
         u = (rand() / float(RAND_MAX));
@@ -51,12 +55,12 @@ ServiceTime emulate_service_time(float dial_success_prob, float dial_mean, float
     }
     else
     {
-        st.time_to_service = st.time_before_call = round(dial_max);
+        st.time_to_service = st.time_before_call = dial_mean_fail;
     }
     if (st.time_to_service < 0 || st.time_to_service > 10000)
     {
         cout <<"time to service is wrong " << st.time_to_service<<endl;
-        cout <<"simulation from: "<<dial_success_prob <<" "<<dial_mean <<" "<<dial_max <<" "<<call_mean<<endl;
+        cout <<"simulation from: "<<dial_success_prob <<" "<<dial_mean_succ <<" "<<dial_mean_fail <<" "<<call_mean<<endl;
     }
     return st;
 }
@@ -98,9 +102,6 @@ list<customer> create_queue(vector<customer> &c, bool need_sort)
 }
 
 
-#define DIAL_SUCCESS_PROB 0.9
-#define DIAL_MEAN 5
-#define DIAL_MAX 15
 
 const vector<int> GROUPS_NUM = {10, 30};
 const vector<float> GROUPS_MEAN = {200, 200};
@@ -111,9 +112,7 @@ int main(int argc, char* argv[])
     vector<Operator> ops;
     vector<int> groups_nums;
     vector<float> groups_means;
-    float dial_success_prob,
-        dial_mean,
-        dial_max;
+    DialInfo dial_info;
     int idx = 1;
 
 
@@ -124,19 +123,17 @@ int main(int argc, char* argv[])
         dial_stat_file = argv[2],
         customers_data_base_file = argv[3],
         operators_file = argv[4],
-        groups_nums_file;
-    if (argc > 5)
-    {
-        groups_nums_file = argv[5];
-//        generate_customers(groups_nums_file, customers_data_base_file);
-    }
+        groups_nums_file,
+        out_file_name = argv[5];
+//     if (argc > 5)
+//     {
+//         groups_nums_file = argv[5];
+// //        generate_customers(groups_nums_file, customers_data_base_file);
+//     }
 
     // 1. Read apriori info: groups-wise call means and dial call means
     GroupsAptrioriMeans groupsMean = ReadGroupMeans(group_stat_file);
-    ReadDialOptions(argv[2], dial_success_prob, dial_mean, dial_max);
-    g_dial_success_prob = dial_success_prob;
-    g_dial_mean = dial_mean;
-    g_dial_max = dial_max;
+    ReadDialOptions(argv[2], dial_info);
 
     // 2. Read online operators info
     ops = read_operators(operators_file);
@@ -150,6 +147,15 @@ int main(int argc, char* argv[])
     // 3. Read online customers info
     map<int,int> groups_of_interest;
     vector<customer> customers = ReadCustomersDataBase(customers_data_base_file, groups_of_interest);
+    
+    map<int,int> grps_possible_to_service;
+    for (auto& op:ops)
+    {
+        for (auto& grp:op.group_ids)
+        {
+            grps_possible_to_service[grp] = 1;
+        }
+    }
 
     cout <<"size of groups in customers: "<< groups_of_interest.size()<<endl;
 
@@ -160,7 +166,8 @@ int main(int argc, char* argv[])
     
     int total_time = 0;
     int iteration_time;
-    int iterations = 10000;
+    int iterations = 1000;
+//    int iterations = 1;
     vector<int> times(iterations);
 
     cout <<"sizeof (int) "<<sizeof(int)<<endl;
@@ -169,10 +176,12 @@ int main(int argc, char* argv[])
     unsigned long start_time = time(NULL),
         end_time;
     map<int, vector<int> > statInfo;
+    map<int, vector<int> > grps_lengths;
     vector<int> total_times(iterations,0);
     for (const auto& grp:groups_of_interest)
     {
         statInfo[grp.first] = vector<int>(iterations,0);
+        grps_lengths[grp.first] = vector<int>(iterations,0);
     }
     // cout <<"start time: "<<start_time<<endl;
     for (int j = 0; j < iterations; j++)
@@ -180,7 +189,7 @@ int main(int argc, char* argv[])
     {
         total_time = 0;
         
-        Server s(ops, groupsMean, groups_of_interest);
+        Server s(ops, groupsMean, groups_of_interest, dial_info);
         list<customer> c = create_queue(customers,true);
         if(VERBOSE)
         {
@@ -233,7 +242,9 @@ int main(int argc, char* argv[])
     cout << summ<<endl;
     summ /= iterations;
     cout <<"time spent alt = "<<summ<<endl;
-
+    ofstream out_file(out_file_name);
+    out_file << summ<<endl;
+    out_file << statInfo.size()<<endl;
     for (const auto& SI: statInfo)
     {
         unsigned long long tmp = 0;
@@ -241,6 +252,14 @@ int main(int argc, char* argv[])
             tmp += si;
         tmp /= SI.second.size();
         cout <<"Group "<<SI.first<<" ~ "<<tmp<<" secs\n";
+        out_file << SI.first<< " "<< tmp;
+        auto found = grps_possible_to_service.find(SI.first);
+        if (found == grps_possible_to_service.end())
+            out_file << " FAIL";
+        else
+            out_file << " SUCCESS";
+        out_file<<endl;
+        cout << "hello\n";
     }
 
     

@@ -93,6 +93,8 @@ vector<Operator> read_operators(string op_filename)
         istringstream iss(line);
         string operator_id;
         iss >> operator_id;
+        int num_grps;
+        iss >> num_grps;
         
         vector<int> groups;
         while (!iss.eof())
@@ -101,6 +103,8 @@ vector<Operator> read_operators(string op_filename)
             iss >> temp;
             groups.push_back(temp);
         }
+        if (num_grps != groups.size())
+            cout<<"num groups "<< groups.size() << " does not match expected " << num_grps<< "  !!!!!\n";
         temp[i] = Operator(groups, operator_id);
     }
     return temp;
@@ -109,18 +113,18 @@ vector<Operator> read_operators(string op_filename)
 
 
 
-void ReadDialOptions(string filename, float& success, float& dial_mean, float& dial_max)
+void ReadDialOptions(string filename, DialInfo& dial_info)
 {
     ifstream file(filename);
     string line;
     getline(file, line);
     istringstream iss(line);
-    iss>>success;
-    iss>>dial_mean;
-    iss>>dial_max;
+    iss>>dial_info.dial_success_prob;
+    iss>> dial_info.dial_mean_succ;
+    iss>>dial_info.dial_mean_fail;
     if(VERBOSE)
     {
-        printf("dial options: success_prob = %.3f, dial_mean=%.3f, dial_max=%.3f\n", (float)success, (float)dial_mean, (float)dial_max);
+        printf("dial options: success_prob = %.3f, dial_mean=%.3f, dial_max=%.3f\n", (float)dial_info.dial_success_prob, (float)dial_info.dial_mean_succ, (float)dial_info.dial_mean_fail);
     }
 }
 
@@ -129,11 +133,11 @@ GroupsAptrioriMeans ReadGroupMeans(string filename)
 {
     ifstream file(filename);
     string line;
-    int max_group_id;
+    int grp_nums;
     getline(file,line);
     
     istringstream iss(line);
-    iss >> max_group_id;
+    iss >> grp_nums;
     
     getline(file,line);
     iss.clear();
@@ -142,7 +146,7 @@ GroupsAptrioriMeans ReadGroupMeans(string filename)
     float extra_mean;
     iss >> extra_mean;
 
-    vector<float> temp(max_group_id, 0.0);
+    map<int,float> temp;
     while (getline(file, line))
     {
         istringstream iss(line);
@@ -160,20 +164,10 @@ GroupsAptrioriMeans ReadGroupMeans(string filename)
             cout << "wrong group mean "<<mean <<endl;
             exit(1);
         }
-        if (group_id >= temp.size())
-        {
-            cout<<"max id was wrong!\n";
-            exit(1);
-            // int old_size = temp.size();
-            // cout <<  "resizing group_id array\n";
-            // temp.resize(group_id + 1);
-            // for (int i = old_size - 1; i < group_id; i++)
-            // {
-            //     temp[i] = 0;
-            // }
-        }
         temp[group_id] = mean;
     }
+    if (grp_nums != temp.size())
+        cout <<"groups nums "<< temp.size()<<" not equals to expected "<<grp_nums<<endl;
 
     cout<<"group means read from file "<<filename <<":"<<endl;
     for (int i = 0; i < temp.size(); i++)

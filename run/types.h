@@ -15,12 +15,20 @@
 #define SLOW 0
 #define VERBOSE 0
 
-extern float g_dial_success_prob;
-extern float g_dial_mean;
-extern float g_dial_max;
-extern float g_call_mean;
+// extern float g_dial_success_prob;
+// extern float g_dial_mean;
+// extern float g_dial_max;
+// extern float g_call_mean;
 
 using namespace std;
+
+class DialInfo
+{
+public:
+    float dial_success_prob;
+    float dial_mean_succ;
+    float dial_mean_fail;
+};
 
 class ServiceTime
 {
@@ -54,9 +62,9 @@ public:
 class GroupsAptrioriMeans
 {
 public:
-    vector<float> means;
+    map<int, float> means;
     float extra_mean;
-GroupsAptrioriMeans(vector<float> &_means, float _extra_mean): means(_means), extra_mean(_extra_mean){};
+GroupsAptrioriMeans(map<int,float> &_means, float _extra_mean): means(_means), extra_mean(_extra_mean){};
     float GetMean(int idx)
     {
         if (idx < 0)
@@ -105,7 +113,7 @@ public:
                     return true;
             return false;
         }
-    void start_new_customer(list<customer>& c, GroupsAptrioriMeans& grps)
+    void start_new_customer(list<customer>& c, GroupsAptrioriMeans& grps, DialInfo dial_info)
         {
             if(VERBOSE)
                 cout<<"starting new customer for operator "<<operator_id<<endl;
@@ -119,7 +127,7 @@ public:
                         a->show();
                         cout<<endl;
                     }
-                    ServiceTime st = emulate_service_time(g_dial_success_prob, g_dial_mean, g_dial_max, grps.GetMean(a->group_id));
+                    ServiceTime st = emulate_service_time(dial_info.dial_success_prob, dial_info.dial_mean_succ, dial_info.dial_mean_fail, grps.GetMean(a->group_id));
                     group_id = a->group_id;
                     time_to_free = st.time_to_service;
 //                    printf("generated time_to_service (%f, %f, %f, %f) = %.3f\n", g_dial_success_prob, g_dial_mean, g_dial_max, grps[a->group_id], time_to_free);
@@ -145,7 +153,7 @@ public:
 class Server
 {
 public:
-Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps, const map<int,int> groups_of_interest): operators(ops), groupMeans(grps), total_time(0), groups_times(groups_of_interest), groups_customers(groups_of_interest)
+Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps, const map<int,int> groups_of_interest, const DialInfo& _dial_info): operators(ops), groupMeans(grps), total_time(0), groups_times(groups_of_interest), groups_customers(groups_of_interest), dial_info(_dial_info)
     {
         for (auto& grp:groups_times)
         {
@@ -153,6 +161,7 @@ Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps, const map<i
         }
     };
     vector<Operator> operators;
+    DialInfo dial_info;
     GroupsAptrioriMeans groupMeans;
 map<int,int> groups_customers;
     map<int,int> groups_times;
@@ -182,7 +191,7 @@ map<int,int> groups_customers;
         {
             for (auto& op:operators)
             {
-                op.start_new_customer(cs, groupMeans);
+                op.start_new_customer(cs, groupMeans, dial_info);
             }
         }
     bool do_iteration(list<customer>& cs)
@@ -204,13 +213,15 @@ map<int,int> groups_customers;
                         a.time_to_free -= time_to_reduce;
                 }
                 total_time += time_to_reduce;
+                if (VERBOSE)
+                    cout <<"total_time = " <<total_time<<endl;
                 groups_customers[minimum->group_id]--;
                 if (groups_customers[minimum->group_id] == 0)
                 {
                     groups_times[minimum->group_id] = total_time;
 //                    cout <<minimum->group_id <<" group is finished!"<<" its time = " << total_time<<"\n";
                 }
-                minimum->start_new_customer(cs, groupMeans);
+                minimum->start_new_customer(cs, groupMeans,dial_info);
                 return true;
             }
             return false;
