@@ -24,3 +24,15 @@ t_all --- mean time to service all queues
 g_i --- group ids
 t_i --- mean time to service g_i group
 b_i --- one of {SUCCESS,FAIL} strings to indicate if queue can be serviced. For example if no one operator can service this group b_i will be FAIL
+
+
+
+
+
+
+INSTALL python libs:
+~: python --version
+~: sudo yum install -y python27
+~: sudo yum install python-pip
+~: sudo yum install python-tk
+~: sudo pip install scipy pandas matplotlib seaborn

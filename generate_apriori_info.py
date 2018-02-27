@@ -28,11 +28,11 @@ def skipping (line_num):
     
 VISUALIZE=False
 
-input_data_dir="/home/victor/Develop/dvad/data/"
+input_data_dir="/home/victor/Development/data/"
 input_operations_history_file="%s/operations_12_02.txt" % input_data_dir
 input_dial_file_name="%s/calls-log-result-export.csv" % input_data_dir
 
-output_dir="/home/victor/Develop/dvad/dvad_git/run/apriori_stat/"
+output_dir="/home/victor/Development/dvad/run/apriori_stat/"
 output_groups_file_name="%s/apriori_data_groups" % output_dir
 output_dial_file_name="%s/apriori_data_dial" % output_dir
 
