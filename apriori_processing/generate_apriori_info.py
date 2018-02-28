@@ -6,8 +6,10 @@ import pandas as pd
 import numpy as np
 import datetime
 import os
+import sys
 from scipy.stats import expon
 from scipy import stats, integrate
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -28,14 +30,22 @@ def skipping (line_num):
     
 VISUALIZE=False
 
-input_data_dir="/home/victor/Development/data/"
-input_operations_history_file="%s/operations_12_02.txt" % input_data_dir
-input_dial_file_name="%s/calls-log-result-export.csv" % input_data_dir
+print "number of arguments: %s" % len(sys.argv)
+print "Arguments: %s" % sys.argv
 
-output_dir="/home/victor/Development/dvad/run/apriori_stat/"
-output_groups_file_name="%s/apriori_data_groups" % output_dir
-output_dial_file_name="%s/apriori_data_dial" % output_dir
+if (len(sys.argv) == 4):
+    input_operations_history_file=sys.argv[1]
+    input_dial_file_name=sys.argv[2]
+    output_groups_file_name=sys.argv[3]
+    output_dial_file_name=sys.argv[4]
+else:
+    input_data_dir="/home/victor/Development/dvad/data/"
+    input_operations_history_file="%s/operations_12_02.txt" % input_data_dir
+    input_dial_file_name="%s/calls-log-result-export.csv" % input_data_dir
 
+    output_dir="/home/victor/Development/dvad/dvad_git/apriori_processing/tmp"
+    output_groups_file_name="%s/apriori_data_groups" % output_dir
+    output_dial_file_name="%s/apriori_data_dial" % output_dir
 
 
 #########################################################
