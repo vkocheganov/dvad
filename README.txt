@@ -8,6 +8,7 @@ Dependencies
 
 1. Define environment variables:
 ~: BINARY_NAME=predict_service
+~: INPUT_APRIORY_operations=/home/victor/Development/dvad/data/operations_12_02.txt
 ~: INPUT_DATA_orders=/home/victor/Develop/dvad/data/Logs/13.02/orders_log_2018_02_13_09_12_48.txt
 ~: INPUT_DATA_operators=/home/victor/Develop/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt
 
@@ -15,14 +16,13 @@ Dependencies
 2. To build binary file:
 ~: g++ -std=c++11 ./queue.cpp ./io.cpp -o $BINARY_NAME
 
-2. To run binary file:
-
-2.1 Provide input files names (customers to service and free operators):
-2.2 Run the binary file:
-~: ./predict_service ./apriori_stat/apriori_data_groups ./apriori_stat/apriori_data_dial $INPUT_DATA_orders $INPUT_DATA_operators ./output 
+3. To generate predictions:
+~: python ./run_prediction.py $INPUT_APRIORY_operations $BINARY_NAME $INPUT_DATA_orders $INPUT_DATA_operators
 
 
-where ./output is the file where binary file saves result in the form:
+
+
+It will generate "temp_**/" folder with "predictions" file inside. The file structure is following:
 t_all
 N
 g_1 t_1 b_1

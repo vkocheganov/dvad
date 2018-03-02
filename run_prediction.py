@@ -1,15 +1,9 @@
 #
 #   customer_type|customer_id|date|group_id|shop_id|good_id|good_name|call_duration|operator_id
-from subprocess import call
-from scipy.stats import gamma
-import time
-import pandas as pd
-import numpy as np
-import datetime
-import os
-import sys
+import pandas as pd, numpy as np
 from scipy.stats import expon
-from scipy import stats, integrate
+import datetime, os, sys, time
+from subprocess import call
 
 # import matplotlib.pyplot as plt
 # import seaborn as sns
@@ -31,24 +25,21 @@ def skipping (line_num):
     
 VISUALIZE=False
 
-if (len(sys.argv) == 6):
+input_dial_file_name="calls-log-result-export.csv"
+if (len(sys.argv) == 5):
     input_operations_history_file=sys.argv[1]
-    input_dial_file_name=sys.argv[2]
-    binary_file_name=sys.argv[3]
-    orders_data_base=sys.argv[4]
-    operators_data_base=sys.argv[5]
+    binary_file_name=sys.argv[2]
+    orders_data_base=sys.argv[3]
+    operators_data_base=sys.argv[4]
 else:
     print "wrong number of arguments. Expected 6, given %s" % len(sys.argv)
     exit(1)
-    # input_data_dir="/home/victor/Development/dvad/data/"
-    # input_operations_history_file="%s/operations_12_02.txt" % input_data_dir
-    # input_dial_file_name="%s/calls-log-result-export.csv" % input_data_dir
-
 
 output_dir="temp_%s" % (time.strftime("%Y%m%d-%H%M%S"))
 os.system("mkdir %s"% output_dir)
 output_groups_file_name="%s/apriori_data_groups" % output_dir
 output_dial_file_name="%s/apriori_data_dial" % output_dir
+output_file="%s/predictions" % output_dir
 
 #########################################################
 # Generate groups
@@ -114,7 +105,6 @@ dial_file.write("%.2f " % succ_prob)
 
 #Wait times
 df_dial=pd.read_csv(input_dial_file_name,sep=';', encoding='cp1251')
-#df_dial=pd.read_csv(input_dial_file_name,sep=';', encoding='utf-8')
 
 w_t=df_dial.loc[:,'wait_time']
 df_dial['wait_time']=w_t.apply(proc)
@@ -127,7 +117,6 @@ with_succ=(idx_without_delivery) & (df_dial['talk_time'] > 0)
 wait_with_succ = df_dial[with_succ]['wait_time']
 mean_time=np.mean(wait_with_succ)
 dial_file.write("%.2f " % mean_time)
-#VISUALIZE=1
 if (VISUALIZE):
     sns.distplot(wait_with_succ, kde=False,  norm_hist=True, color='r',label="wait_time_%.2f_without_talk__%.2d" % (mean_time,np.sum(with_succ)))
     plt.legend()
@@ -137,20 +126,16 @@ without_succ=(idx_without_delivery) & (df_dial['talk_time'] == 0)
 wait_without_succ = df_dial[without_succ]['wait_time']
 mean_time=np.mean(wait_without_succ)
 dial_file.write("%.2f\n" % mean_time)
-#VISUALIZE=1
 if (VISUALIZE):
     sns.distplot(wait_without_succ, kde=False,  norm_hist=True, color='g',label="wait_time_%.2f_without_talk__%.2d" % (mean_time,np.sum(without_succ)))
     plt.legend()
     plt.show()
 
 
-
-#print np.sum(idx_without_delivery)
 print "finish generating dial's means"
 dial_file.close()
 
 
-string_to_run = "%s %s %s %s %s ./output" % (binary_file_name, output_groups_file_name, output_dial_file_name, orders_data_base, operators_data_base)
+string_to_run = "%s %s %s %s %s %s" % (binary_file_name, output_groups_file_name, output_dial_file_name, orders_data_base, operators_data_base, output_file)
 print "Running app:\n%s" % string_to_run 
 os.system(string_to_run)
-
