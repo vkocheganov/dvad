@@ -1,13 +1,23 @@
-1. To build binary file:
-~: g++ -std=c++11 ./queue.cpp ./io.cpp -o predict_service
+Dependencies
+   INSTALL python libs:
+   ~: python --version
+   ~: sudo yum install -y python27
+   ~: sudo yum install python-pip
+   ~: sudo yum install python-tk
+   ~: sudo pip install scipy pandas matplotlib seaborn
 
+1. Define environment variables:
+~: BINARY_NAME=predict_service
+~: INPUT_DATA_orders=/home/victor/Develop/dvad/data/Logs/13.02/orders_log_2018_02_13_09_12_48.txt
+~: INPUT_DATA_operators=/home/victor/Develop/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt
+
+
+2. To build binary file:
+~: g++ -std=c++11 ./queue.cpp ./io.cpp -o $BINARY_NAME
 
 2. To run binary file:
 
 2.1 Provide input files names (customers to service and free operators):
-~: INPUT_DATA_orders=/home/victor/Develop/dvad/data/Logs/13.02/orders_log_2018_02_13_09_12_48.txt
-~: INPUT_DATA_operators=/home/victor/Develop/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt
-
 2.2 Run the binary file:
 ~: ./predict_service ./apriori_stat/apriori_data_groups ./apriori_stat/apriori_data_dial $INPUT_DATA_orders $INPUT_DATA_operators ./output 
 
@@ -30,9 +40,3 @@ b_i --- one of {SUCCESS,FAIL} strings to indicate if queue can be serviced. For 
 
 
 
-INSTALL python libs:
-~: python --version
-~: sudo yum install -y python27
-~: sudo yum install python-pip
-~: sudo yum install python-tk
-~: sudo pip install scipy pandas matplotlib seaborn

@@ -65,7 +65,7 @@ vector<customer> ReadCustomersDataBase(string filename, map<int,int>& groups_of_
     // for (auto& a:temp)
     //     a.show();
 
-    cout <<"from file queues:"<<endl;
+    cout <<"Queues to service:"<<endl;
     for (auto & grp:groups_of_interest)
     {
         cout <<grp.first<<" ~ "<<grp.second<<endl;
@@ -180,7 +180,7 @@ GroupsAptrioriMeans ReadGroupMeans(string filename)
     if (grp_nums != temp.size())
         cout <<"groups nums "<< temp.size()<<" not equals to expected "<<grp_nums<<endl;
 
-    cout<<"group means read from file "<<filename <<":"<<endl;
+    cout<<"Groups apriori info: "<<":"<<endl;
     for (int i = 0; i < temp.size(); i++)
         if (temp[i] >0)
             cout <<"("<<i<<", "<< temp[i]<<")"<<endl;

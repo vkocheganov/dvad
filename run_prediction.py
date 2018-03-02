@@ -31,17 +31,18 @@ def skipping (line_num):
     
 VISUALIZE=False
 
-print "number of arguments: %s" % len(sys.argv)
-print "Arguments: %s" % sys.argv
-
-if (len(sys.argv) == 4):
+if (len(sys.argv) == 6):
     input_operations_history_file=sys.argv[1]
     input_dial_file_name=sys.argv[2]
     binary_file_name=sys.argv[3]
+    orders_data_base=sys.argv[4]
+    operators_data_base=sys.argv[5]
 else:
-    input_data_dir="/home/victor/Development/dvad/data/"
-    input_operations_history_file="%s/operations_12_02.txt" % input_data_dir
-    input_dial_file_name="%s/calls-log-result-export.csv" % input_data_dir
+    print "wrong number of arguments. Expected 6, given %s" % len(sys.argv)
+    exit(1)
+    # input_data_dir="/home/victor/Development/dvad/data/"
+    # input_operations_history_file="%s/operations_12_02.txt" % input_data_dir
+    # input_dial_file_name="%s/calls-log-result-export.csv" % input_data_dir
 
 
 output_dir="temp_%s" % (time.strftime("%Y%m%d-%H%M%S"))
@@ -144,11 +145,12 @@ if (VISUALIZE):
 
 
 
-print np.sum(idx_without_delivery)
+#print np.sum(idx_without_delivery)
 print "finish generating dial's means"
 dial_file.close()
 
 
-
-os.system("%s %s %s /home/victor/Development/dvad/data/Logs/13.02/orders_log_2018_02_13_09_12_48.txt  /home/victor/Development/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt ./output" % (binary_file_name, output_groups_file_name, output_dial_file_name))
+string_to_run = "%s %s %s %s %s ./output" % (binary_file_name, output_groups_file_name, output_dial_file_name, orders_data_base, operators_data_base)
+print "Running app:\n%s" % string_to_run 
+os.system(string_to_run)
 

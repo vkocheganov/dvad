@@ -249,7 +249,7 @@ int main(int argc, char* argv[])
     }
     cout << summ<<endl;
     summ /= iterations;
-    cout <<"time spent alt = "<<summ<<endl;
+    cout <<"time spent = "<<summ<<endl;
     ofstream out_file(out_file_name);
     out_file << summ<<endl;
     out_file << statInfo.size()<<endl;
@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
         for (const auto& si:SI.second)
             tmp += si;
         tmp /= SI.second.size();
-        cout <<"Group "<<SI.first<<" ~ "<<tmp<<" secs\n";
+	//        cout <<"Group "<<SI.first<<" ~ "<<tmp<<" secs\n";
         out_file << SI.first<< " "<< tmp;
         auto found = grps_possible_to_service.find(SI.first);
         if (found == grps_possible_to_service.end())
@@ -267,7 +267,6 @@ int main(int argc, char* argv[])
         else
             out_file << " SUCCESS";
         out_file<<endl;
-        cout << "hello\n";
     }
 
     
