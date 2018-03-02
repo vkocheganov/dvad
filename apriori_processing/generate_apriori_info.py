@@ -19,7 +19,7 @@ def proc(str):
     if (hh < 0 | mm < 0 | ss < 0):
         return 0
     return (hh*3600 + mm*60 + ss)
- 
+
 def dateparse (time_str):
     return datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
 
