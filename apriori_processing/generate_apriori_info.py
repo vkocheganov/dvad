@@ -1,5 +1,6 @@
 #
 #   customer_type|customer_id|date|group_id|shop_id|good_id|good_name|call_duration|operator_id
+from subprocess import call
 from scipy.stats import gamma
 import time
 import pandas as pd
@@ -10,8 +11,8 @@ import sys
 from scipy.stats import expon
 from scipy import stats, integrate
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib.pyplot as plt
+# import seaborn as sns
 
 def proc(str):
     [hh, mm, ss] = [int(s) for s in str.split(':') ]
@@ -36,17 +37,17 @@ print "Arguments: %s" % sys.argv
 if (len(sys.argv) == 4):
     input_operations_history_file=sys.argv[1]
     input_dial_file_name=sys.argv[2]
-    output_groups_file_name=sys.argv[3]
-    output_dial_file_name=sys.argv[4]
+    binary_file_name=sys.argv[3]
 else:
     input_data_dir="/home/victor/Development/dvad/data/"
     input_operations_history_file="%s/operations_12_02.txt" % input_data_dir
     input_dial_file_name="%s/calls-log-result-export.csv" % input_data_dir
 
-    output_dir="/home/victor/Development/dvad/dvad_git/apriori_processing/tmp"
-    output_groups_file_name="%s/apriori_data_groups" % output_dir
-    output_dial_file_name="%s/apriori_data_dial" % output_dir
 
+output_dir="temp_%s" % (time.strftime("%Y%m%d-%H%M%S"))
+os.system("mkdir %s"% output_dir)
+output_groups_file_name="%s/apriori_data_groups" % output_dir
+output_dial_file_name="%s/apriori_data_dial" % output_dir
 
 #########################################################
 # Generate groups
@@ -146,4 +147,8 @@ if (VISUALIZE):
 print np.sum(idx_without_delivery)
 print "finish generating dial's means"
 dial_file.close()
+
+
+
+os.system("%s %s %s /home/victor/Development/dvad/data/Logs/13.02/orders_log_2018_02_13_09_12_48.txt  /home/victor/Development/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt ./output" % (binary_file_name, output_groups_file_name, output_dial_file_name))
 

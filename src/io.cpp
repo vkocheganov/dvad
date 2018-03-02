@@ -10,6 +10,7 @@
 #include <time.h>
 #include <string>
 #include <fstream>
+#include <numeric>
 
 vector<customer> ReadCustomersDataBase(string filename, map<int,int>& groups_of_interest)
 {
@@ -116,6 +117,11 @@ vector<Operator> read_operators(string op_filename)
 void ReadDialOptions(string filename, DialInfo& dial_info)
 {
     ifstream file(filename);
+    if (!file.is_open())
+      {
+	cout <<"error reading file: "<<filename<<endl;
+	exit(1);
+      }
     string line;
     getline(file, line);
     istringstream iss(line);
@@ -132,6 +138,11 @@ void ReadDialOptions(string filename, DialInfo& dial_info)
 GroupsAptrioriMeans ReadGroupMeans(string filename)
 {
     ifstream file(filename);
+    if (!file.is_open())
+      {
+	cout <<"error reading file: "<<filename<<endl;
+	exit(1);
+      }
     string line;
     int grp_nums;
     getline(file,line);

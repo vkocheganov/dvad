@@ -125,6 +125,14 @@ int main(int argc, char* argv[])
         operators_file = argv[4],
         groups_nums_file,
         out_file_name = argv[5];
+
+    cout << "Input files:"<<endl;
+    cout << "       Apriori groups info file: "<< group_stat_file<<endl;
+    cout << "       Apriori dialing info file: "<< dial_stat_file<<endl;
+    cout << "       Customers data base file: "<< customers_data_base_file<<endl;
+    cout << "       Operators data base file: "<< operators_file<<endl;
+    cout << "Output file:"<<endl;
+    cout << "       Output file: "<< out_file_name<<endl;
 //     if (argc > 5)
 //     {
 //         groups_nums_file = argv[5];
