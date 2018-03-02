@@ -146,6 +146,7 @@ if (learn_new_data == "yes"):
 if (build_data == "yes"):
     build_command="g++ -std=c++11 ./queue.cpp ./io.cpp -o %s" % binary_file_name
     print "---------- Runing build command: %s"% build_command
+    os.system(build_command)
     print "Creating file %s " % binary_file_name
 
 string_to_run = "%s %s %s %s %s %s" % (binary_file_name, output_groups_file_name, output_dial_file_name, orders_data_base, operators_data_base, output_file)

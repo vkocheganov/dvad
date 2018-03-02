@@ -15,6 +15,11 @@
 vector<customer> ReadCustomersDataBase(string filename, map<int,int>& groups_of_interest)
 {
     ifstream file(filename);
+    if (!file.is_open())
+      {
+	cout <<"error reading file: "<<filename<<endl;
+	exit(1);
+      }
     string line;
     int customers_num;
     getline(file,line);
@@ -77,6 +82,11 @@ vector<customer> ReadCustomersDataBase(string filename, map<int,int>& groups_of_
 vector<Operator> read_operators(string op_filename)
 {
     ifstream file(op_filename);
+    if (!file.is_open())
+      {
+	cout <<"error reading file: "<<op_filename<<endl;
+	exit(1);
+      }
     int nops;
     string line;
     getline(file, line);
@@ -110,8 +120,6 @@ vector<Operator> read_operators(string op_filename)
     }
     return temp;
 }
-
-
 
 
 void ReadDialOptions(string filename, DialInfo& dial_info)
@@ -189,17 +197,16 @@ GroupsAptrioriMeans ReadGroupMeans(string filename)
     return GroupsAptrioriMeans(temp, extra_mean);
 }
 
-
-
-
-
-
-
 void read_groups_nums(string gr_filename, vector<int>& groups_num)
 {
     if(VERBOSE)
         cout <<"reading groups\n";
     ifstream file(gr_filename);
+    if (!file.is_open())
+      {
+	cout <<"error reading file: "<<gr_filename<<endl;
+	exit(1);
+      }
     int ngrs;
     string line;
     
@@ -233,6 +240,11 @@ void generate_customers(string in_filename, string out_filename)
     read_groups_nums(in_filename, group_nums);
     
     ofstream file(out_filename);
+    if (!file.is_open())
+      {
+	cout <<"error reading file: "<<out_filename<<endl;
+	exit(1);
+      }
     int total_size = accumulate(group_nums.begin(), group_nums.end(), 0);
     int shift = 0;
     int group_id = 0;
