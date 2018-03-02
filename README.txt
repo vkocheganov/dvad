@@ -7,17 +7,15 @@ Dependencies
    ~: sudo pip install scipy pandas matplotlib seaborn
 
 1. Define environment variables:
-~: BINARY_NAME=predict_service
 ~: INPUT_APRIORY_operations=/home/victor/Development/dvad/data/operations_12_02.txt
 ~: INPUT_DATA_orders=/home/victor/Development/dvad/data/Logs/13.02/orders_log_2018_02_13_09_12_48.txt
-~: INPUT_DATA_operators=/home/victor/Development/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt
+~: INPUT_DATA_operators=/home/victor/Developmentb/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt
+~: BUILD_PREDICTOR=yes
+~: LEARN_PREDICTOR=yes
 
 
-2. To build binary file:
-~: g++ -std=c++11 ./queue.cpp ./io.cpp -o $BINARY_NAME
-
-3. To generate predictions:
-~: python ./run_prediction.py $INPUT_APRIORY_operations $BINARY_NAME $INPUT_DATA_orders $INPUT_DATA_operators
+2. To build/learn/run predictions:
+~: python ./run_prediction.py $INPUT_APRIORY_operations $INPUT_DATA_orders $INPUT_DATA_operators $LEARN_PREDICTOR $BUILD_PREDICTOR
 
 
 
@@ -34,9 +32,4 @@ t_all --- mean time to service all queues
 g_i --- group ids
 t_i --- mean time to service g_i group
 b_i --- one of {SUCCESS,FAIL} strings to indicate if queue can be serviced. For example if no one operator can service this group b_i will be FAIL
-
-
-
-
-
 
