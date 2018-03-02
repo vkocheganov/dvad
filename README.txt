@@ -9,8 +9,8 @@ Dependencies
 1. Define environment variables:
 ~: BINARY_NAME=predict_service
 ~: INPUT_APRIORY_operations=/home/victor/Development/dvad/data/operations_12_02.txt
-~: INPUT_DATA_orders=/home/victor/Develop/dvad/data/Logs/13.02/orders_log_2018_02_13_09_12_48.txt
-~: INPUT_DATA_operators=/home/victor/Develop/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt
+~: INPUT_DATA_orders=/home/victor/Development/dvad/data/Logs/13.02/orders_log_2018_02_13_09_12_48.txt
+~: INPUT_DATA_operators=/home/victor/Development/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt
 
 
 2. To build binary file:
