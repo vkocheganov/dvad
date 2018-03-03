@@ -1,3 +1,4 @@
+VERSION=1.0
 Dependencies
    INSTALL python libs:
    ~: python --version
@@ -17,7 +18,7 @@ Dependencies
 2.a To build/learn/run predictions (need only once):
     ~: python ./run_prediction.py $INPUT_APRIORY_operations $INPUT_DATA_orders $INPUT_DATA_operators $LEARN_PREDICTOR $BUILD_PREDICTOR
 
-2.b To skip build/learn phases and initiate only run phase:
+2.b To skip build/learn phases and start only run phase:
     ~: BUILD_PREDICTOR=no
     ~: LEARN_PREDICTOR=no
     ~: python ./run_prediction.py $INPUT_APRIORY_operations $INPUT_DATA_orders $INPUT_DATA_operators $LEARN_PREDICTOR $BUILD_PREDICTOR
