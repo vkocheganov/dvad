@@ -9,7 +9,7 @@ Dependencies
 1. Define environment variables:
    ~: INPUT_APRIORY_operations=/home/victor/Development/dvad/data/operations_12_02.txt
    ~: INPUT_DATA_orders=/home/victor/Development/dvad/data/Logs/13.02/orders_log_2018_02_13_09_12_48.txt
-   ~: INPUT_DATA_operators=/home/victor/Developmentb/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt
+   ~: INPUT_DATA_operators=/home/victor/Development/dvad/data/Logs/13.02/operators_log_2018_02_13_09_12_48.txt
    ~: BUILD_PREDICTOR=yes
    ~: LEARN_PREDICTOR=yes
 
