@@ -45,13 +45,15 @@ if (learn_new_data == "yes"):
         print "wrong number of arguments. Expected 5, given %s" % (len(sys.argv)-1)
         exit(1)
 
-#input_operations_history_file="/home/victor/Development/dvad/data/operations_12_02.txt"
+input_operations_history_file="/home/victor/Development/dvad/data/operations_12_02.txt"
 
 output_groups_file_name="apriori_data_groups"
 output_dial_file_name="apriori_data_dial"
 output_base_file="predictions"
 output_dir="logs"
-output_file="%s_%s" % (output_base_file, time.strftime("%Y%m%d-%H%M%S"))
+
+timestamp=time.strftime("%Y%m%d-%H%M%S")
+output_file="%s_%s" % (output_base_file, timestamp)
     
 
 if (learn_new_data == "yes"):
@@ -166,3 +168,6 @@ if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
 os.system("cp %s %s/%s" % (output_base_file, output_dir, output_file))
+
+os.system("cp %s %s/%s_%s" % (orders_data_base, output_dir, "orders", timestamp))
+os.system("cp %s %s/%s_%s" % (operators_data_base, output_dir, "operators", timestamp))
