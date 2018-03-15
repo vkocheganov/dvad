@@ -42,7 +42,9 @@ if (learn_new_data == "yes"):
     else:
         print "wrong number of arguments. Expected 5, given %s" % (len(sys.argv)-1)
         exit(1)
-    
+
+
+# input_operations_history_file="/home/victor/Development/dvad/data/operations_12_02.txt"
 output_groups_file_name="apriori_data_groups"
 output_dial_file_name="apriori_data_dial"
 output_file="predictions_%s" % (time.strftime("%Y%m%d-%H%M%S"))
@@ -59,10 +61,8 @@ if (learn_new_data == "yes"):
     groups_file = open(output_groups_file_name,'w')
     print "Creating file %s " % output_groups_file_name
 
-    #of_interest_idxes=(df_operations['call_duration']>0) & (df_operations['customer_type']=='first_call')
-    #of_interest_idxes=(df_operations['call_duration']>0) & (df_operations['customer_type']=='first_touch')
-    of_interest_idxes=(df_operations['call_duration']>0)
-    of_interest=df_operations[of_interest_idxes]['call_duration']
+    of_interest_idxes=(df_operations[7]>0)
+    of_interest=df_operations[of_interest_idxes][7]
     of_interest_mean=np.mean(of_interest)
 
 
@@ -75,7 +75,7 @@ if (learn_new_data == "yes"):
         plt.title("all durations, operations=%d" %(np.sum(of_interest_idxes)))
         plt.show()
 
-    groups=df_operations[of_interest_idxes]['group_id'].unique()
+    groups=df_operations[of_interest_idxes][3].unique()
     groups=np.sort(groups)
 
 
@@ -84,8 +84,8 @@ if (learn_new_data == "yes"):
 
 
     for group in groups:
-        idxes=(of_interest_idxes) & (df_operations['group_id']==group)
-        of_interest=(df_operations[idxes]['call_duration'])
+        idxes=(of_interest_idxes) & (df_operations[3]==group)
+        of_interest=(df_operations[idxes][7])
         of_interest_mean=np.mean(of_interest)
         groups_file.write("%d %.0f\n" %(group,of_interest_mean))
         if (VISUALIZE):
@@ -109,8 +109,8 @@ if (learn_new_data == "yes"):
     print "Creating file %s " % output_dial_file_name
 
     # Success call probability
-    first_calls=(df_operations['customer_type']=='first_call')
-    first_calls_succ=(df_operations['customer_type']=='first_call') & (df_operations['call_duration']>0)
+    first_calls=(df_operations[0]=='first_call')
+    first_calls_succ=(df_operations[0]=='first_call') & (df_operations[0]>0)
     succ_prob=np.sum(first_calls_succ)/float(np.sum(first_calls))
     dial_file.write("%.2f " % succ_prob)
 
