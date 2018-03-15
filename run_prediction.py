@@ -3,7 +3,7 @@
 import pandas as pd, numpy as np
 from scipy.stats import expon
 import datetime, os, sys, time
-from subprocess import call
+import os
 
 # import matplotlib.pyplot as plt
 # import seaborn as sns
@@ -25,6 +25,8 @@ def skipping (line_num):
     
 VISUALIZE=False
 
+
+
 input_dial_file_name="calls-log-result-export.csv"
 binary_file_name="./predict_service"
 if (len(sys.argv) >= 5):
@@ -43,11 +45,13 @@ if (learn_new_data == "yes"):
         print "wrong number of arguments. Expected 5, given %s" % (len(sys.argv)-1)
         exit(1)
 
+#input_operations_history_file="/home/victor/Development/dvad/data/operations_12_02.txt"
 
-# input_operations_history_file="/home/victor/Development/dvad/data/operations_12_02.txt"
 output_groups_file_name="apriori_data_groups"
 output_dial_file_name="apriori_data_dial"
-output_file="predictions_%s" % (time.strftime("%Y%m%d-%H%M%S"))
+output_base_file="predictions"
+output_dir="logs"
+output_file="%s_%s" % (output_base_file, time.strftime("%Y%m%d-%H%M%S"))
     
 
 if (learn_new_data == "yes"):
@@ -153,6 +157,12 @@ if (build_data == "yes"):
     os.system(build_command)
     print "Creating file %s " % binary_file_name
 
-string_to_run = "%s %s %s %s %s %s" % (binary_file_name, output_groups_file_name, output_dial_file_name, orders_data_base, operators_data_base, output_file)
+string_to_run = "%s %s %s %s %s %s" % (binary_file_name, output_groups_file_name, output_dial_file_name, orders_data_base, operators_data_base, output_base_file)
+
 print "---------- Running app:\n%s" % string_to_run 
 os.system(string_to_run)
+
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+os.system("cp %s %s/%s" % (output_base_file, output_dir, output_file))
