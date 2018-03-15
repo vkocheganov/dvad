@@ -27,22 +27,25 @@ VISUALIZE=False
 
 input_dial_file_name="calls-log-result-export.csv"
 binary_file_name="./predict_service"
-if (len(sys.argv) == 6):
-    input_operations_history_file=sys.argv[1]
-    orders_data_base=sys.argv[2]
-    operators_data_base=sys.argv[3]
-    learn_new_data=sys.argv[4]
-    build_data=sys.argv[5]
+if (len(sys.argv) >= 5):
+    orders_data_base=sys.argv[1]
+    operators_data_base=sys.argv[2]
+    learn_new_data=sys.argv[3]
+    build_data=sys.argv[4]
 else:
-    print "wrong number of arguments. Expected 5, given %s" % (len(sys.argv)-1)
+    print "wrong number of arguments. Expected >=4, given %s" % (len(sys.argv)-1)
     exit(1)
 
+if (learn_new_data == "yes"):
+    if (len(sys.argv) == 6):
+        input_operations_history_file=sys.argv[5]
+    else:
+        print "wrong number of arguments. Expected 5, given %s" % (len(sys.argv)-1)
+        exit(1)
+    
 output_groups_file_name="apriori_data_groups"
 output_dial_file_name="apriori_data_dial"
 output_file="predictions_%s" % (time.strftime("%Y%m%d-%H%M%S"))
-
-
-    
     
 
 if (learn_new_data == "yes"):
@@ -51,7 +54,8 @@ if (learn_new_data == "yes"):
     # Generate groups
     #########################################################
 
-    df_operations=pd.read_csv(input_operations_history_file,sep='|',parse_dates=['date'], date_parser=dateparse)
+    df_operations=pd.read_csv(input_operations_history_file,header=None, sep='|',parse_dates=[2], date_parser=dateparse)
+
     groups_file = open(output_groups_file_name,'w')
     print "Creating file %s " % output_groups_file_name
 
