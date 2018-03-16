@@ -45,7 +45,7 @@ if (learn_new_data == "yes"):
         print "wrong number of arguments. Expected 5, given %s" % (len(sys.argv)-1)
         exit(1)
 
-input_operations_history_file="/home/victor/Development/dvad/data/operations_12_02.txt"
+# input_operations_history_file="/home/victor/Development/dvad/data/operations_12_02.txt"
 
 output_groups_file_name="apriori_data_groups"
 output_dial_file_name="apriori_data_dial"
