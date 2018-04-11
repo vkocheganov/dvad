@@ -178,12 +178,18 @@ int main(int argc, char* argv[])
 //    int iterations = 1;
     vector<int> times(iterations);
 
-    cout <<"sizeof (int) "<<sizeof(int)<<endl;
-    cout <<"sizeof (unsigned long int) "<<sizeof(unsigned long int)<<endl;
-    cout <<"sizeof (unsigned long long int) "<<sizeof(unsigned long long int)<<endl;
     unsigned long start_time = time(NULL),
         end_time;
     map<int, vector<int> > statInfo;
+    
+#if EXTENDED_STAT
+    map<string, vector<int> > statInfo_cust;
+    for (const auto& cust:customers)
+    {
+        statInfo_cust[cust.name] = vector<int>(iterations,0);
+    }
+#endif
+    
     map<int, vector<int> > grps_lengths;
     vector<int> total_times(iterations,0);
     for (const auto& grp:groups_of_interest)
@@ -191,7 +197,8 @@ int main(int argc, char* argv[])
         statInfo[grp.first] = vector<int>(iterations,0);
         grps_lengths[grp.first] = vector<int>(iterations,0);
     }
-    // cout <<"start time: "<<start_time<<endl;
+
+
     for (int j = 0; j < iterations; j++)
 //    for (int j = 0; j < 1; j++)    
     {
@@ -239,17 +246,18 @@ int main(int argc, char* argv[])
             i++;
         }
         s.GetGroupsStat(statInfo, total_times, j);
+#if EXTENDED_STAT
+        s.GetGroupsStat_cust(statInfo_cust, total_times, j);
+#endif
     }
     end_time = time(nullptr);
-    // cout <<"end time: "<<end_time<<endl;
     unsigned long long summ = 0;
     for (int j = 0; j < iterations; j++)
     {
         summ += total_times[j];
     }
-    cout << summ<<endl;
     summ /= iterations;
-    cout <<"time spent = "<<summ<<endl;
+    
     ofstream out_file(out_file_name);
     out_file << summ<<endl;
     out_file << statInfo.size()<<endl;
@@ -268,8 +276,22 @@ int main(int argc, char* argv[])
             out_file << " SUCCESS";
         out_file<<endl;
     }
-
     
+#if EXTENDED_STAT
+    out_file<<endl<<endl;
+    cout <<"statinfo cust num = "<<statInfo_cust.size()<<endl;
+    for (const auto& SI: statInfo_cust)
+    {
+        unsigned long long tmp = 0;
+        for (const auto& si:SI.second)
+            tmp += si;
+        tmp /= SI.second.size();
+        out_file << SI.first<< " "<< tmp;
+        out_file<<endl;
+    }
+#endif
+
+
 
     cout <<"time for generating:" << end_time - start_time<<endl;
     return 0;

@@ -25,6 +25,7 @@ vector<customer> ReadCustomersDataBase(string filename, map<int,int>& groups_of_
     getline(file,line);
     
     istringstream iss(line);
+    string cust_name;
     iss >> customers_num;
     vector<customer> temp(customers_num);
     int cust_idx = 0;
@@ -61,6 +62,9 @@ vector<customer> ReadCustomersDataBase(string filename, map<int,int>& groups_of_
             groups_of_interest[group_id]++;
         }
         temp[cust_idx].group_id = group_id;
+	
+	iss >> cust_name;
+	temp[cust_idx].name = cust_name;
         cust_idx++;
     }
 

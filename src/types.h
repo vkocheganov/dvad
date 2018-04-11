@@ -14,11 +14,7 @@
 
 #define SLOW 0
 #define VERBOSE 0
-
-// extern float g_dial_success_prob;
-// extern float g_dial_mean;
-// extern float g_dial_max;
-// extern float g_call_mean;
+#define EXTENDED_STAT 1
 
 using namespace std;
 
@@ -57,6 +53,7 @@ public:
         }
     time_t enter_time_tm;
     int group_id;
+    string name;
 };
 
 class GroupsAptrioriMeans
@@ -91,6 +88,7 @@ public:
     bool is_enabled;
     int time_to_free;
     int group_id;
+    customer curr_cust;
     void show() const {
         cout << "Operator "<< operator_id<<": ";
         cout <<"time="<<time_to_free<< ", ";
@@ -129,6 +127,7 @@ public:
                     }
                     ServiceTime st = emulate_service_time(dial_info.dial_success_prob, dial_info.dial_mean_succ, dial_info.dial_mean_fail, grps.GetMean(a->group_id));
                     group_id = a->group_id;
+		    curr_cust = *a;
                     time_to_free = st.time_to_service;
 //                    printf("generated time_to_service (%f, %f, %f, %f) = %.3f\n", g_dial_success_prob, g_dial_mean, g_dial_max, grps[a->group_id], time_to_free);
                     c.erase(a);
@@ -165,6 +164,9 @@ Server(const vector<Operator>& ops, const GroupsAptrioriMeans &grps, const map<i
     GroupsAptrioriMeans groupMeans;
 map<int,int> groups_customers;
     map<int,int> groups_times;
+#if EXTENDED_STAT
+    map<string,int> cust_times;
+#endif
     int total_time;
     void show()
         {
@@ -219,6 +221,9 @@ map<int,int> groups_customers;
                 if (groups_customers[minimum->group_id] == 0)
                 {
                     groups_times[minimum->group_id] = total_time;
+#if EXTENDED_STAT
+		    cust_times[minimum->curr_cust.name] = total_time;
+#endif
 //                    cout <<minimum->group_id <<" group is finished!"<<" its time = " << total_time<<"\n";
                 }
                 minimum->start_new_customer(cs, groupMeans,dial_info);
@@ -239,6 +244,17 @@ map<int,int> groups_customers;
         }
         total_times[idx] = total_time;
     }
+
+#if EXTENDED_STAT
+    void GetGroupsStat_cust(map<string,vector<int> >& stat, vector<int>& total_times, int idx)
+    {
+        for (auto& cust:cust_times)
+        {
+            stat[cust.first][idx] = cust.second;
+        }
+        total_times[idx] = total_time;
+    }
+#endif
 };
 
 
