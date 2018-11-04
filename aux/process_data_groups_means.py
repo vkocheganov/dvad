@@ -9,66 +9,66 @@ from scipy.stats import expon
 from scipy import stats, integrate
 import matplotlib.pyplot as plt
 import seaborn as sns
+import sys
 
 def dateparse (time_str):
     return datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
 
-work_dir="/home/victor/Develop/dvad/dvad_git/call_durations_new"
+if (len(sys.argv) <= 2):
+    print "Too few arguments"
+
+work_dir=sys.argv[1]
+main_file=sys.argv[2]
+# work_dir="/home/victor/Develop/dvad/dvad_git/call_durations_new"
 #main_file="C:\\Users\\victork\\Documents\\Kagle\\DVaD\\Data\\operations.txt"
 #main_file="/home/victor/Develop/dvad/data/operations.txt"
-main_file="/home/victor/Develop/dvad/data/operations_12_02.txt"
 
-df=pd.read_csv(main_file,sep='|',parse_dates=['date'], date_parser=dateparse)
-
-idx_fisrt_call_fail=(df['customer_type']=='first_call') & (df['call_duration']==0)
-df.set_value(idx_fisrt_call_fail,'customer_type',"first_call_fail")
-operation_types=['first_call','first_touch']
-
-#days=np.sort(df['date'].dt.day.unique())
-#days=days[days[:] <=29 ]
-
-operators=df['operator_id'].unique()
-
-idx_first_op=df['customer_type']=='first_operation'
-first_op_customers=df[idx_first_op]['customer_id'].unique()
-print first_op_customers[0:10]
-first_call_fail=df[idx_fisrt_call_fail]['customer_id'].unique()
-print first_call_fail[0:10]
+df_operations=pd.read_csv(main_file,header=None, sep='|',parse_dates=[2], date_parser=dateparse)
 
 
-
-idxes=(df['call_duration']>0)
-np.sum(idxes)
-of_interest=df[idxes]['call_duration']
+of_interest_idxes=(df_operations[7]>0)
+of_interest=df_operations[of_interest_idxes][7]
 of_interest_mean=np.mean(of_interest)
-x = np.random.exponential(scale = of_interest_mean, size=2000)
-sns.distplot(x, kde=False,  norm_hist=True, color='r',label="exponential_mean %.2f" % of_interest_mean)
-sns.distplot(of_interest, kde=False,  norm_hist=True, color='b', label="real_data")
-plt.legend()
-plt.title("all durations, operations=%d" %(np.sum(idxes)))
-plt.show()
 
 
-groups=df['group_id'].unique()
+VISUALIZE=1
+if (VISUALIZE):
+    x = np.random.exponential(scale = of_interest_mean, size=2000)
+    sns.distplot(x, kde=False,  norm_hist=True, color='r',label="exponential_mean %.2f" % of_interest_mean)
+    sns.distplot(of_interest, kde=False,  norm_hist=True, color='b', label="real_data")
+    plt.legend()
+    plt.title("all durations, operations=%d" %(np.sum(of_interest_idxes)))
+    plt.show()
+
+groups=df_operations[of_interest_idxes][3].unique()
+groups=np.sort(groups)
+
+
 par_fold="%s/group_wise" % work_dir;
 os.mkdir(par_fold)
 
 fold_name="%s/%s" % (par_fold,'full')
 os.mkdir(fold_name)
 for group in groups:
-    idxes=(df['group_id']==group) &  ( (df['customer_type'].str.strip() == 'first_call') | (df['customer_type'].str.strip() == 'first_touch'))
-    if (np.sum(idxes) == 0):
-        continue
-    of_interest=(df[idxes]['call_duration'])
-
+    idxes=(of_interest_idxes) & (df_operations[3]==group)
+    of_interest=(df_operations[idxes][7])
     of_interest_mean=np.mean(of_interest)
-    x = np.random.exponential(scale = of_interest_mean, size=2000)
-    sns.distplot(x, kde=False,  norm_hist=True, color='r',label="exponential_mean %.2f" % of_interest_mean)
-    sns.distplot(of_interest, kde=False,  norm_hist=True, color='b', label="real_data")
-    plt.legend()
-    plt.title("group=%s, operations=%d" %(group,np.sum(idxes)))
-    plt.savefig("%s/group_%s.png"%(fold_name,group) )
-    plt.close()
+    if (VISUALIZE):
+        x = np.random.exponential(scale = of_interest_mean, size=2000)
+        sns.distplot(x, kde=False,  norm_hist=True, color='r',label="exponential_mean %.2f" % of_interest_mean)
+        sns.distplot(of_interest, kde=False,  norm_hist=True, color='b', label="real_data")
+        plt.legend()
+        plt.title("group=%s, operations=%d" %(group,np.sum(idxes)))
+        plt.savefig("%s/group_%s.png"%(fold_name,group) )
+        plt.close()
+
+    # x = np.random.exponential(scale = of_interest_mean, size=2000)
+    # sns.distplot(x, kde=False,  norm_hist=True, color='r',label="exponential_mean %.2f" % of_interest_mean)
+    # sns.distplot(of_interest, kde=False,  norm_hist=True, color='b', label="real_data")
+    # plt.legend()
+    # plt.title("group=%s, operations=%d" %(group,np.sum(idxes)))
+    # plt.savefig("%s/group_%s.png"%(fold_name,group) )
+    # plt.close()
 
 
 
